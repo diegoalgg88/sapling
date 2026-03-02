@@ -39,6 +39,7 @@ export async function createTempGitRepo(): Promise<string> {
 		throw new Error(`git init failed: ${stderr}`);
 	}
 
+	// Set minimal git config for commits
 	const configName = Bun.spawn(["git", "-C", dir, "config", "user.name", "test"], {
 		stdout: "pipe",
 		stderr: "pipe",
@@ -76,8 +77,10 @@ export function createMockClient(responses: LlmResponse[]): LlmClient {
 			return response;
 		},
 		estimateTokens: (text: string): number => {
+			// Simple char-based estimate: 4 chars ≈ 1 token
 			return Math.ceil(text.length / 4);
 		},
+		// Expose for test assertions
 		get callCount() {
 			return callCount;
 		},

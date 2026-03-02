@@ -10,23 +10,13 @@
 		"url": "https://github.com/jayminwest/sapling.git"
 	},
 	"homepage": "https://github.com/jayminwest/sapling",
-	"keywords": [
-		"ai",
-		"agents",
-		"cli",
-		"developer-tools",
-		"coding-agent",
-		"context-management"
-	],
+	"keywords": ["ai", "agents", "cli", "developer-tools", "coding-agent", "context-management"],
 	"bin": {
 		"sp": "./src/index.ts",
 		"sapling": "./src/index.ts"
 	},
 	"main": "src/index.ts",
-	"files": [
-		"src",
-		"agents"
-	],
+	"files": ["src", "agents"],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -35,8 +25,8 @@
 	},
 	"scripts": {
 		"test": "bun test",
-		"lint": "biome check .",
-		"lint:fix": "biome check --write .",
+		"lint": "biome check src/",
+		"lint:fix": "biome check --write src/",
 		"typecheck": "tsc --noEmit",
 		"version:bump": "bun scripts/version-bump.ts"
 	},
