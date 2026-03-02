@@ -1,6 +1,5 @@
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { ClientError } from "../errors.ts";
+import { logger } from "../logging/logger.ts";
 import type {
 	CcStructuredResponse,
 	ContentBlock,
@@ -44,7 +43,7 @@ interface CcConfig {
 interface CcRawResponse {
 	type: string;
 	subtype?: string;
-	result?: string;
+	result?: string | Record<string, unknown>;
 	usage?: {
 		input_tokens?: number;
 		output_tokens?: number;
@@ -86,124 +85,138 @@ export class CcClient implements LlmClient {
 	}
 
 	async call(request: LlmRequest): Promise<LlmResponse> {
-		const id = Date.now().toString(36);
-		const tmpDir = tmpdir();
-		const systemFile = join(tmpDir, `sapling-system-${id}.md`);
-		const schemaFile = join(tmpDir, `sapling-schema-${id}.json`);
+		const promptLines: string[] = [];
+		for (const msg of request.messages) {
+			const content = serializeMessageContent(msg.content as string | ContentBlock[]);
+			promptLines.push(`[${msg.role === "user" ? "User" : "Assistant"}]: ${content}`);
+		}
+		const prompt = promptLines.join("\n");
 
+		const args: string[] = [
+			this.claudePath,
+			"-p",
+			prompt,
+			"--system-prompt",
+			request.systemPrompt,
+			"--tools",
+			"",
+			"--output-format",
+			"json",
+		];
+
+		if (request.tools.length > 0) {
+			args.push("--json-schema", JSON.stringify(CC_SCHEMA));
+		}
+
+		if (request.model ?? this.model) {
+			args.push("--model", (request.model ?? this.model) as string);
+		}
+
+		// Strip CLAUDECODE env var to avoid "nested sessions" error when
+		// sapling is launched from within a Claude Code session.
+		const env = { ...process.env };
+		delete env.CLAUDECODE;
+
+		logger.debug("Spawning CC subprocess", {
+			claude: this.claudePath,
+			model: request.model ?? this.model,
+			promptLength: prompt.length,
+		});
+
+		const proc = Bun.spawn(args, {
+			cwd: this.cwd,
+			stdin: "ignore",
+			stdout: "pipe",
+			stderr: "pipe",
+			env,
+		});
+
+		// Drain stdout/stderr concurrently to avoid pipe deadlock —
+		// if the buffer fills before proc.exited is awaited, the subprocess blocks forever.
+		const [exitCode, stdout, stderr] = await Promise.all([
+			proc.exited,
+			new Response(proc.stdout).text(),
+			new Response(proc.stderr).text(),
+		]);
+
+		logger.debug("CC subprocess exited", { exitCode, stdoutLength: stdout.length });
+
+		if (exitCode !== 0) {
+			throw new ClientError(`CC subprocess failed: ${stderr}`, "CC_FAILED");
+		}
+
+		let raw: CcRawResponse;
 		try {
-			await Bun.write(systemFile, request.systemPrompt);
+			raw = JSON.parse(stdout) as CcRawResponse;
+		} catch {
+			throw new ClientError(`CC subprocess returned invalid JSON: ${stdout}`, "CC_INVALID_JSON");
+		}
 
-			const promptLines: string[] = [];
-			for (const msg of request.messages) {
-				const content = serializeMessageContent(msg.content as string | ContentBlock[]);
-				promptLines.push(`[${msg.role === "user" ? "User" : "Assistant"}]: ${content}`);
-			}
-			const prompt = promptLines.join("\n");
+		logger.debug("CC raw response", {
+			type: raw.type,
+			subtype: raw.subtype,
+			hasResult: raw.result !== undefined,
+			resultType: typeof raw.result,
+			keys: Object.keys(raw),
+		});
 
-			const args: string[] = [
-				this.claudePath,
-				"-p",
-				prompt,
-				"--system-prompt-file",
-				systemFile,
-				"--tools",
-				"",
-				"--max-turns",
-				"1",
-				"--output-format",
-				"json",
-			];
+		if (!raw.result) {
+			throw new ClientError(
+				`CC subprocess response missing result field. Response: ${stdout.slice(0, 500)}`,
+				"CC_INVALID_RESPONSE",
+			);
+		}
 
-			if (request.tools.length > 0) {
-				await Bun.write(schemaFile, JSON.stringify(CC_SCHEMA));
-				args.push("--json-schema", schemaFile);
-			}
-
-			if (request.model ?? this.model) {
-				args.push("--model", (request.model ?? this.model) as string);
-			}
-
-			const proc = Bun.spawn(args, {
-				cwd: this.cwd,
-				stdout: "pipe",
-				stderr: "pipe",
-				env: { ...process.env },
-			});
-
-			const exitCode = await proc.exited;
-
-			if (exitCode !== 0) {
-				const stderr = await new Response(proc.stderr).text();
-				throw new ClientError(`CC subprocess failed: ${stderr}`, "CC_FAILED");
-			}
-
-			const stdout = await new Response(proc.stdout).text();
-
-			let raw: CcRawResponse;
-			try {
-				raw = JSON.parse(stdout) as CcRawResponse;
-			} catch {
-				throw new ClientError(`CC subprocess returned invalid JSON: ${stdout}`, "CC_INVALID_JSON");
-			}
-
-			if (!raw.result) {
-				throw new ClientError("CC subprocess response missing result field", "CC_INVALID_RESPONSE");
-			}
-
-			let structured: CcStructuredResponse;
+		// result may be:
+		// 1. A JSON string conforming to CC_SCHEMA (structured response)
+		// 2. An already-parsed object (when --json-schema returns an object)
+		// 3. Plain text (when --json-schema is ignored, e.g. with --tools "")
+		let structured: CcStructuredResponse;
+		if (typeof raw.result === "object") {
+			structured = raw.result as unknown as CcStructuredResponse;
+		} else {
 			try {
 				structured = JSON.parse(raw.result) as CcStructuredResponse;
 			} catch {
-				throw new ClientError(
-					`CC subprocess result is not valid JSON: ${raw.result}`,
-					"CC_INVALID_JSON",
-				);
-			}
-
-			const content: ContentBlock[] = [];
-
-			if (structured.thinking) {
-				content.push({ type: "text", text: structured.thinking });
-			}
-
-			let stopReason: "end_turn" | "tool_use" | "max_tokens" = "end_turn";
-
-			if (structured.tool_calls && structured.tool_calls.length > 0) {
-				stopReason = "tool_use";
-				for (const tc of structured.tool_calls) {
-					content.push({
-						type: "tool_use",
-						id: crypto.randomUUID(),
-						name: tc.name,
-						input: tc.input,
-					});
-				}
-			} else if (structured.text_response) {
-				content.push({ type: "text", text: structured.text_response });
-			}
-
-			const usage = raw.usage ?? {};
-
-			return {
-				content,
-				usage: {
-					inputTokens: usage.input_tokens ?? 0,
-					outputTokens: usage.output_tokens ?? 0,
-					cacheReadTokens: usage.cache_read_input_tokens,
-					cacheCreationTokens: usage.cache_creation_input_tokens,
-				},
-				model: raw.model ?? request.model ?? this.model ?? "unknown",
-				stopReason,
-			};
-		} finally {
-			// Best-effort cleanup of temp files
-			try {
-				const { unlink } = await import("node:fs/promises");
-				await Promise.allSettled([unlink(systemFile), unlink(schemaFile)]);
-			} catch {
-				// ignore cleanup errors
+				// Plain text response — treat as text_response with no tool calls
+				structured = { thinking: "", text_response: raw.result };
 			}
 		}
+
+		const content: ContentBlock[] = [];
+
+		if (structured.thinking) {
+			content.push({ type: "text", text: structured.thinking });
+		}
+
+		let stopReason: "end_turn" | "tool_use" | "max_tokens" = "end_turn";
+
+		if (structured.tool_calls && structured.tool_calls.length > 0) {
+			stopReason = "tool_use";
+			for (const tc of structured.tool_calls) {
+				content.push({
+					type: "tool_use",
+					id: crypto.randomUUID(),
+					name: tc.name,
+					input: tc.input,
+				});
+			}
+		} else if (structured.text_response) {
+			content.push({ type: "text", text: structured.text_response });
+		}
+
+		const usage = raw.usage ?? {};
+
+		return {
+			content,
+			usage: {
+				inputTokens: usage.input_tokens ?? 0,
+				outputTokens: usage.output_tokens ?? 0,
+				cacheReadTokens: usage.cache_read_input_tokens,
+				cacheCreationTokens: usage.cache_creation_input_tokens,
+			},
+			model: raw.model ?? request.model ?? this.model ?? "unknown",
+			stopReason,
+		};
 	}
 }

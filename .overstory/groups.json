@@ -1,0 +1,16 @@
+[
+	{
+		"id": "group-80a79af1",
+		"name": "sapling-mvp-impl",
+		"memberIssueIds": [
+			"sapling-f71a",
+			"sapling-e469",
+			"sapling-930d",
+			"sapling-884a",
+			"sapling-7543"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-02T22:35:24.848Z",
+		"completedAt": "2026-03-02T22:51:32.210Z"
+	}
+]
