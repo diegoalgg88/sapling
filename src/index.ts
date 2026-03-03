@@ -2,6 +2,8 @@
 import { Command } from "commander";
 import { runCommand } from "./cli.ts";
 import { loadConfig } from "./config.ts";
+import { setColorEnabled } from "./logging/color.ts";
+import { configure } from "./logging/logger.ts";
 import type { LlmBackend, RunOptions } from "./types.ts";
 
 export const VERSION = "0.1.0";
@@ -42,6 +44,15 @@ program
 			...(opts.quiet !== undefined ? { quiet: opts.quiet } : {}),
 			cwd: (options.cwd as string | undefined) ?? process.cwd(),
 		});
+
+		configure({
+			verbose: config.verbose,
+			quiet: config.quiet,
+			json: options.json as boolean | undefined,
+		});
+		if (config.quiet) {
+			setColorEnabled(false);
+		}
 
 		const result = await runCommand(prompt, opts, config);
 
