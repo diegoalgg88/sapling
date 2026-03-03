@@ -63,4 +63,17 @@ describe("GrepTool", () => {
 		expect(def.name).toBe("grep");
 		expect(def.input_schema.required).toContain("pattern");
 	});
+
+	it("handles large output without pipe deadlock", async () => {
+		// Write files with many matching lines to exceed DEFAULT_MATCH_LIMIT (100)
+		// Each file has 10 lines containing "matchme"; 20 files = 200 lines > 100 limit
+		const lines = `${Array.from({ length: 10 }, (_, i) => `matchme line ${i}`).join("\n")}\n`;
+		for (let i = 0; i < 20; i++) {
+			await Bun.write(join(testDir, `large_${i}.txt`), lines);
+		}
+		// Should not deadlock; result is truncated at DEFAULT_MATCH_LIMIT lines
+		const result = await tool.execute({ pattern: "matchme", output_mode: "content" }, testDir);
+		expect(result.isError).toBeFalsy();
+		expect(result.metadata?.truncated).toBe(true);
+	});
 });

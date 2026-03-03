@@ -128,9 +128,11 @@ export class GrepTool implements Tool {
 			stderr: "pipe",
 		});
 
-		const exitCode = await proc.exited;
-		const stdoutText = await new Response(proc.stdout).text();
-		const stderrText = await new Response(proc.stderr).text();
+		const [exitCode, stdoutText, stderrText] = await Promise.all([
+			proc.exited,
+			new Response(proc.stdout).text(),
+			new Response(proc.stderr).text(),
+		]);
 
 		// exit code 1 from rg = no matches found (not an error)
 		if (exitCode > 1) {
