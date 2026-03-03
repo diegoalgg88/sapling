@@ -91,6 +91,7 @@ export interface SaplingConfig {
 	cwd: string;
 	verbose: boolean;
 	quiet: boolean;
+	json: boolean;
 	contextWindow: number;
 	contextBudget: ContextBudget;
 }
@@ -102,6 +103,7 @@ export interface RunOptions {
 	maxTurns?: number;
 	verbose?: boolean;
 	quiet?: boolean;
+	json?: boolean;
 }
 
 // ─── Context Types ────────────────────────────────────────────────────────────
