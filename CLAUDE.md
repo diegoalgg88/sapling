@@ -35,7 +35,7 @@ Each turn: call LLM → if no tool calls, stop → execute all tool calls in par
 ### LLM clients (`src/client/`)
 
 Two backends implementing `LlmClient` from `src/types.ts`:
-- **CcClient** (`cc.ts`, default) — spawns `claude` subprocess with `--max-turns 1`, parses structured JSON response
+- **CcClient** (`cc.ts`, default) — spawns `claude` subprocess with `--output-format json` and `--json-schema`, parses structured JSON response
 - **AnthropicClient** (`anthropic.ts`) — calls Anthropic SDK directly; `@anthropic-ai/sdk` is an optional dep, dynamically imported
 
 ### Context pipeline (`src/context/`)
