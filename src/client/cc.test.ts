@@ -18,6 +18,7 @@ function makeFakeProcess(opts: { exitCode: number; stdout: string; stderr?: stri
 
 	return {
 		exited: Promise.resolve(opts.exitCode),
+		kill: () => {},
 		stdout: new ReadableStream({
 			start(controller) {
 				controller.enqueue(stdoutBytes);
@@ -27,6 +28,24 @@ function makeFakeProcess(opts: { exitCode: number; stdout: string; stderr?: stri
 		stderr: new ReadableStream({
 			start(controller) {
 				controller.enqueue(stderrBytes);
+				controller.close();
+			},
+		}),
+	};
+}
+
+// A process that never exits — simulates a hung subprocess for timeout tests.
+function makeHangingProcess() {
+	return {
+		exited: new Promise<number>(() => {}),
+		kill: () => {},
+		stdout: new ReadableStream({
+			start() {
+				// Never close — simulates blocked output
+			},
+		}),
+		stderr: new ReadableStream({
+			start(controller) {
 				controller.close();
 			},
 		}),
@@ -347,6 +366,38 @@ describe("CcClient", () => {
 			await expect(client.call(baseRequest)).rejects.toMatchObject({
 				code: "CC_INVALID_RESPONSE",
 			});
+		});
+	});
+
+	describe("timeout", () => {
+		it("throws CC_TIMEOUT when subprocess hangs past timeoutMs", async () => {
+			spawnSpy.mockReturnValue(makeHangingProcess());
+
+			const client = new CcClient({ timeoutMs: 50 });
+			await expect(client.call(baseRequest)).rejects.toMatchObject({
+				code: "CC_TIMEOUT",
+			});
+		});
+
+		it("does not timeout when subprocess responds before deadline", async () => {
+			const structured = { thinking: "fast response", text_response: "done" };
+			spawnSpy.mockReturnValue(makeFakeProcess({ exitCode: 0, stdout: makeCcOutput(structured) }));
+
+			// Very short timeout — but fake process resolves immediately so it must not trigger
+			const client = new CcClient({ timeoutMs: 5000 });
+			const result = await client.call(baseRequest);
+			expect(result.stopReason).toBe("end_turn");
+		});
+
+		it("uses 120_000ms default timeout when not configured", () => {
+			const client = new CcClient();
+			// Access private field via cast to verify default
+			expect((client as unknown as { timeoutMs: number }).timeoutMs).toBe(120_000);
+		});
+
+		it("respects custom timeoutMs from config", () => {
+			const client = new CcClient({ timeoutMs: 30_000 });
+			expect((client as unknown as { timeoutMs: number }).timeoutMs).toBe(30_000);
 		});
 	});
 });

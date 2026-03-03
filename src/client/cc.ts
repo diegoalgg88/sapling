@@ -38,6 +38,7 @@ interface CcConfig {
 	model?: string;
 	cwd?: string;
 	claudePath?: string;
+	timeoutMs?: number;
 }
 
 interface CcRawResponse {
@@ -74,11 +75,13 @@ export class CcClient implements LlmClient {
 	private readonly model: string | undefined;
 	private readonly cwd: string;
 	private readonly claudePath: string;
+	private readonly timeoutMs: number;
 
 	constructor(config?: CcConfig) {
 		this.model = config?.model;
 		this.cwd = config?.cwd ?? process.cwd();
 		this.claudePath = config?.claudePath ?? "claude";
+		this.timeoutMs = config?.timeoutMs ?? 120_000;
 	}
 
 	estimateTokens(text: string): number {
@@ -149,13 +152,26 @@ export class CcClient implements LlmClient {
 			env,
 		});
 
-		// Drain stdout/stderr concurrently to avoid pipe deadlock —
-		// if the buffer fills before proc.exited is awaited, the subprocess blocks forever.
-		const [exitCode, stdout, stderr] = await Promise.all([
+		// Race the drain against a timeout — proc can hang indefinitely on invalid model
+		// or stalled network. On timeout, kill the subprocess and throw CC_TIMEOUT.
+		// Reject before kill() so the race resolves on the timeout path, not the drain path.
+		const drainPromise = Promise.all([
 			proc.exited,
 			new Response(proc.stdout).text(),
 			new Response(proc.stderr).text(),
 		]);
+		let timeoutId: ReturnType<typeof setTimeout> | undefined;
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			timeoutId = setTimeout(() => {
+				reject(new ClientError(`CC subprocess timed out after ${this.timeoutMs}ms`, "CC_TIMEOUT"));
+				proc.kill();
+			}, this.timeoutMs);
+		});
+		const [exitCode, stdout, stderr] = await Promise.race([drainPromise, timeoutPromise]).finally(
+			() => {
+				clearTimeout(timeoutId);
+			},
+		);
 
 		logger.debug("CC subprocess exited", { exitCode, stdoutLength: stdout.length });
 
