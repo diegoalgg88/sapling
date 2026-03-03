@@ -43,16 +43,17 @@ export class BashTool implements Tool {
 		}, timeoutMs);
 
 		let exitCode: number;
+		let stdoutText: string;
+		let stderrText: string;
 		try {
-			exitCode = await proc.exited;
+			[exitCode, stdoutText, stderrText] = await Promise.all([
+				proc.exited,
+				new Response(proc.stdout).text(),
+				new Response(proc.stderr).text(),
+			]);
 		} finally {
 			clearTimeout(timeoutId);
 		}
-
-		const [stdoutText, stderrText] = await Promise.all([
-			new Response(proc.stdout).text(),
-			new Response(proc.stderr).text(),
-		]);
 
 		let output = stdoutText;
 		if (stderrText) {
