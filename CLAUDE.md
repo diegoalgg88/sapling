@@ -11,7 +11,7 @@ Sapling (`@os-eco/sapling-cli`, CLI: `sp` / `sapling`) is a headless coding agen
 All commands use **Bun** as the runtime. There is no build/compile step — TypeScript runs directly.
 
 ```bash
-bun test                  # Run all 164 tests
+bun test                  # Run all 164 tests (17 files, 377 expect() calls)
 bun test src/loop.test.ts # Run a single test file
 bun run lint              # Lint (Biome)
 bun run lint:fix          # Lint + auto-fix
@@ -30,7 +30,7 @@ Quality gate before finishing work: `bun test && bun run lint && bun run typeche
 
 ### Agent loop (`src/loop.ts`)
 
-Each turn: call LLM → if no tool calls, stop → execute all tool calls in parallel (`Promise.all`) → append results → run context manager on message array → next turn. Stops on: task complete (no tools), max turns (200), or unrecoverable error.
+Each turn: call LLM → if no tool calls, stop → execute all tool calls in parallel (`Promise.all`) → append results → run context manager on message array → next turn. Stops on: task complete (no tools), max turns (200), or unrecoverable error. LLM errors use exponential backoff (3 retries, immediate abort on auth/model errors).
 
 ### LLM clients (`src/client/`)
 
@@ -46,6 +46,11 @@ Runs every turn via `SaplingContextManager.process()`:
 3. **Prune** (`prune.ts`) — truncate large bash output, replace stale file reads, summarize/drop low-score old messages
 4. **Archive** (`archive.ts`) — dropped messages become a rolling work summary (template-based, no LLM call)
 5. **Reshape** (`reshape.ts`) — rebuild: [task] → [archive] → [pruned history] → [current turn]
+
+### Other source files
+
+- `src/json.ts` — JSON parsing utilities
+- `src/test-helpers.ts` — Shared test helpers (temp dirs, mock client/tool factories)
 
 ### Tools (`src/tools/`)
 

@@ -70,16 +70,38 @@ The LLM never sees a bloated context. Every piece of information has earned its 
 ```
 sapling/
   src/
-    index.ts              CLI entry point
-    loop.ts               Agent turn loop
-    types.ts              Shared types and interfaces
-    errors.ts             Custom error types
-    config.ts             Config loader + validation
-    client/               LLM backends (cc subprocess, Anthropic SDK)
-    tools/                Tool implementations (bash, read, write, edit, grep, glob)
-    context/              Context manager pipeline (measure, score, prune, archive, reshape)
-    logging/              Structured logging
-  agents/                 Agent definition files
+    index.ts              CLI entry point (Commander)
+    cli.ts                Run command handler — wires client + tools + context → loop
+    loop.ts               Agent turn loop (call → dispatch → prune → repeat)
+    types.ts              Canonical types and interfaces
+    errors.ts             Error hierarchy: SaplingError → ClientError, ToolError, ContextError, ConfigError
+    config.ts             Config loader + env var support + validation
+    json.ts               JSON parsing utilities
+    test-helpers.ts       Shared test utilities (temp dirs, mock factories)
+    client/
+      cc.ts               Claude Code subprocess backend
+      anthropic.ts        Anthropic SDK backend (optional dep, dynamic import)
+      index.ts            Client factory
+    tools/
+      bash.ts             Shell command execution
+      read.ts             File reading with line numbers
+      write.ts            File creation/overwrite
+      edit.ts             Exact string replacement
+      grep.ts             Regex content search (ripgrep-style)
+      glob.ts             File pattern matching
+      index.ts            Tool registry + createDefaultRegistry()
+    context/
+      manager.ts          Pipeline orchestrator (SaplingContextManager)
+      measure.ts          Token budget tracking (4 chars/token heuristic)
+      score.ts            Relevance scoring (recency, file overlap, error, decision, size)
+      prune.ts            Message truncation + summarization strategies
+      archive.ts          Rolling work summary + file modification tracking
+      reshape.ts          Message array reconstruction
+    logging/              Structured JSON logging (pino-style)
+  agents/
+    builder.md            Builder persona — writes code, runs quality gates
+    reviewer.md           Reviewer persona — reviews code, no edits
+    scout.md              Scout persona — explores code, no edits
 ```
 
 ### LLM Backends
@@ -103,13 +125,24 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 | [Overstory](https://github.com/jayminwest/overstory) | Multi-agent orchestration |
 | **Sapling** | Headless coding agent |
 
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SAPLING_MODEL` | `claude-sonnet-4-6` | Model to use |
+| `SAPLING_BACKEND` | `cc` | LLM backend (`cc` or `sdk`) |
+| `SAPLING_MAX_TURNS` | `200` | Maximum agent turns |
+| `SAPLING_CONTEXT_WINDOW` | `200000` | Context window size in tokens |
+
 ## Development
 
 ```bash
 git clone https://github.com/jayminwest/sapling.git
 cd sapling
 bun install
-bun test
+bun test                  # 164 tests across 17 files (377 expect() calls)
+bun run lint              # Biome linting
+bun run typecheck         # TypeScript strict check
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.

@@ -196,6 +196,16 @@ export async function runLoop(
 		// ── Step 5: Check stop condition — no tool calls ──────────────────────
 		const toolCalls = extractToolCalls(response.content);
 		if (toolCalls.length === 0) {
+			// Extract final text from the response
+			const finalText = response.content
+				.filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text")
+				.map((b) => b.text)
+				.join("\n");
+
+			if (finalText) {
+				process.stdout.write(`${finalText}\n`);
+			}
+
 			logger.info(`Task complete after ${totalTurns} turn(s)`, {
 				inputTokens: totalInputTokens,
 				outputTokens: totalOutputTokens,
