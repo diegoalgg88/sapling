@@ -150,6 +150,45 @@ describe("CcClient", () => {
 			});
 		});
 
+		it("injects tool definitions into system prompt when tools provided", async () => {
+			const structured = { thinking: "ok", text_response: "done" };
+			spawnSpy.mockReturnValue(makeFakeProcess({ exitCode: 0, stdout: makeCcOutput(structured) }));
+
+			const client = new CcClient();
+			await client.call({
+				...baseRequest,
+				tools: [
+					{
+						name: "bash",
+						description: "Run a bash command",
+						input_schema: { type: "object", properties: { command: { type: "string" } } },
+					},
+				],
+			});
+
+			const callArgs = spawnSpy.mock.calls[0];
+			const args = callArgs?.[0] as string[];
+			const sysPromptIndex = args.indexOf("--system-prompt") + 1;
+			const systemPromptArg = args[sysPromptIndex];
+			expect(systemPromptArg).toContain("## Available Tools");
+			expect(systemPromptArg).toContain("**bash**");
+			expect(systemPromptArg).toContain("Run a bash command");
+		});
+
+		it("does not inject tool section when no tools provided", async () => {
+			const structured = { thinking: "ok", text_response: "done" };
+			spawnSpy.mockReturnValue(makeFakeProcess({ exitCode: 0, stdout: makeCcOutput(structured) }));
+
+			const client = new CcClient();
+			await client.call(baseRequest); // tools: []
+
+			const callArgs = spawnSpy.mock.calls[0];
+			const args = callArgs?.[0] as string[];
+			const sysPromptIndex = args.indexOf("--system-prompt") + 1;
+			const systemPromptArg = args[sysPromptIndex];
+			expect(systemPromptArg).not.toContain("## Available Tools");
+		});
+
 		it("serializes plain text user messages correctly", async () => {
 			const structured = { thinking: "ok", text_response: "done" };
 			spawnSpy.mockReturnValue(makeFakeProcess({ exitCode: 0, stdout: makeCcOutput(structured) }));

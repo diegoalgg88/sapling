@@ -93,12 +93,25 @@ export class CcClient implements LlmClient {
 		}
 		const prompt = promptLines.join("\n");
 
+		// Inject Sapling tool definitions into the system prompt so the LLM knows
+		// the exact tool names, descriptions, and input schemas to use in tool_calls.
+		let systemPrompt = request.systemPrompt;
+		if (request.tools.length > 0) {
+			const toolDefs = request.tools
+				.map(
+					(t) =>
+						`- **${t.name}**: ${t.description}\n  Input schema: ${JSON.stringify(t.input_schema)}`,
+				)
+				.join("\n");
+			systemPrompt = `${systemPrompt}\n\n## Available Tools\n\n${toolDefs}`;
+		}
+
 		const args: string[] = [
 			this.claudePath,
 			"-p",
 			prompt,
 			"--system-prompt",
-			request.systemPrompt,
+			systemPrompt,
 			"--tools",
 			"",
 			"--output-format",
