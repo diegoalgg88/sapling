@@ -60,6 +60,15 @@ describe("BashTool", () => {
 		expect(result.metadata?.truncated).toBe(true);
 	});
 
+	it("does not deadlock on output exceeding pipe buffer (~64KB)", async () => {
+		// Generate ~200KB of output to exceed typical pipe buffer size
+		// Before the fix, this would deadlock because proc.exited was awaited
+		// before draining stdout, causing the process to block on a full pipe.
+		const result = await tool.execute({ command: "python3 -c \"print('x' * 200000)\"" }, testDir);
+		expect(result.isError).toBeFalsy();
+		expect(result.metadata?.truncated).toBe(true);
+	});
+
 	it("throws on empty command", async () => {
 		expect(tool.execute({ command: "" }, testDir)).rejects.toThrow();
 	});
