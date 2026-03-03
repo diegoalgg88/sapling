@@ -258,4 +258,47 @@ describe("AnthropicClient", () => {
 			await expect(client.call(baseRequest)).rejects.toMatchObject({ code: "SDK_AUTH_FAILED" });
 		});
 	});
+
+	describe("baseURL passthrough", () => {
+		it("passes baseURL to the SDK constructor", async () => {
+			let capturedOpts: Record<string, unknown> | undefined;
+			mock.module("@anthropic-ai/sdk", () => ({
+				default: class MockAnthropic {
+					messages = {
+						create: () => Promise.resolve(makeSdkResponse()),
+					};
+					constructor(opts?: Record<string, unknown>) {
+						capturedOpts = opts;
+					}
+				},
+			}));
+
+			const client = new AnthropicClient({
+				baseURL: "https://api.minimax.io/anthropic",
+			});
+			await client.call(baseRequest);
+
+			expect(capturedOpts).toBeDefined();
+			expect(capturedOpts?.baseURL).toBe("https://api.minimax.io/anthropic");
+		});
+
+		it("omits baseURL from constructor when not provided", async () => {
+			let capturedOpts: Record<string, unknown> | undefined;
+			mock.module("@anthropic-ai/sdk", () => ({
+				default: class MockAnthropic {
+					messages = {
+						create: () => Promise.resolve(makeSdkResponse()),
+					};
+					constructor(opts?: Record<string, unknown>) {
+						capturedOpts = opts;
+					}
+				},
+			}));
+
+			const client = new AnthropicClient();
+			await client.call(baseRequest);
+
+			expect(capturedOpts).toBeUndefined();
+		});
+	});
 });

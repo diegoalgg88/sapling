@@ -27,7 +27,7 @@ explore relevant code, make changes, verify results. When done, say what you acc
 
 function createClient(config: SaplingConfig): LlmClient {
 	if (config.backend === "sdk") {
-		return new AnthropicClient({ model: config.model });
+		return new AnthropicClient({ model: config.model, baseURL: config.apiBaseUrl });
 	}
 	if (config.backend === "pi") {
 		return new PiClient({ model: config.model, cwd: config.cwd });

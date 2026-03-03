@@ -12,5 +12,136 @@
 		"status": "completed",
 		"createdAt": "2026-03-02T22:35:24.848Z",
 		"completedAt": "2026-03-02T22:51:32.210Z"
+	},
+	{
+		"id": "group-90ebb1cd",
+		"name": "sapling-bugfix-and-hardening",
+		"memberIssueIds": [
+			"sapling-501a",
+			"sapling-4e5d",
+			"sapling-5b1a",
+			"sapling-7c7d",
+			"sapling-58cf",
+			"sapling-4cd1",
+			"sapling-4784",
+			"sapling-237f",
+			"sapling-70e4",
+			"sapling-58cb",
+			"sapling-7216",
+			"sapling-d6c5",
+			"sapling-5622",
+			"sapling-1f98"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T00:25:39.085Z",
+		"completedAt": "2026-03-03T00:50:53.238Z"
+	},
+	{
+		"id": "group-79256d5b",
+		"name": "sapling-unblocked-fixes",
+		"memberIssueIds": [
+			"sapling-48ad",
+			"sapling-a01f",
+			"sapling-a58d"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T01:53:43.798Z",
+		"completedAt": "2026-03-03T01:59:52.110Z"
+	},
+	{
+		"id": "group-67301e16",
+		"name": "sapling-cli-polish",
+		"memberIssueIds": [
+			"sapling-287d",
+			"sapling-09bd",
+			"sapling-5412",
+			"sapling-fa61",
+			"sapling-46a7",
+			"sapling-16aa",
+			"sapling-ffc5",
+			"sapling-0bbd",
+			"sapling-bcb3",
+			"sapling-a6d4",
+			"sapling-43da",
+			"sapling-0440",
+			"sapling-3770",
+			"sapling-7cd7",
+			"sapling-d3f8",
+			"sapling-28ac"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T02:19:09.322Z",
+		"completedAt": "2026-03-03T02:40:38.003Z"
+	},
+	{
+		"id": "group-ae14a2c7",
+		"name": "sapling-v0.1.2-fixes",
+		"memberIssueIds": [
+			"sapling-2692",
+			"sapling-db52",
+			"sapling-0e2e",
+			"sapling-1ffa",
+			"sapling-49eb",
+			"sapling-3b68",
+			"sapling-7990",
+			"sapling-0ba0",
+			"sapling-9d72",
+			"sapling-3e30",
+			"sapling-a240",
+			"sapling-2c0f",
+			"sapling-a87e",
+			"sapling-d9aa"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T13:41:42.843Z",
+		"completedAt": "2026-03-03T13:58:06.962Z"
+	},
+	{
+		"id": "group-1812ff97",
+		"name": "sapling-v0.1.3-fixes",
+		"memberIssueIds": [
+			"sapling-49de",
+			"sapling-4055",
+			"sapling-39cf",
+			"sapling-6b29",
+			"sapling-bb3a",
+			"sapling-6de2",
+			"sapling-3efb",
+			"sapling-827f",
+			"sapling-5ad6",
+			"sapling-3810",
+			"sapling-fe2c",
+			"sapling-8ac5",
+			"sapling-e9aa"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T14:28:20.428Z",
+		"completedAt": "2026-03-03T14:39:25.990Z"
+	},
+	{
+		"id": "group-96ba2b42",
+		"name": "sapling-pi-backend",
+		"memberIssueIds": [
+			"sapling-becf",
+			"sapling-f9bd",
+			"sapling-797f"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T15:00:44.354Z",
+		"completedAt": "2026-03-03T15:21:50.735Z"
+	},
+	{
+		"id": "group-f2ad44d9",
+		"name": "sapling-phase1-phase2",
+		"memberIssueIds": [
+			"sapling-1b43",
+			"sapling-1975",
+			"sapling-7ab5",
+			"sapling-c8bb",
+			"sapling-8603"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T19:11:15.649Z",
+		"completedAt": "2026-03-03T19:20:46.489Z"
 	}
 ]

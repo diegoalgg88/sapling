@@ -63,6 +63,33 @@ describe("validateConfig", () => {
 });
 
 describe("loadConfig", () => {
+	const ENV_KEYS = [
+		"SAPLING_MODEL",
+		"SAPLING_BACKEND",
+		"SAPLING_MAX_TURNS",
+		"SAPLING_CONTEXT_WINDOW",
+		"ANTHROPIC_BASE_URL",
+	] as const;
+	let savedEnv: Record<string, string | undefined>;
+
+	beforeEach(() => {
+		savedEnv = {};
+		for (const key of ENV_KEYS) {
+			savedEnv[key] = process.env[key];
+			delete process.env[key];
+		}
+	});
+
+	afterEach(() => {
+		for (const key of ENV_KEYS) {
+			if (savedEnv[key] === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = savedEnv[key];
+			}
+		}
+	});
+
 	it("returns default config with no overrides", () => {
 		const config = loadConfig();
 		expect(config.model).toBe(DEFAULT_CONFIG.model);
@@ -71,6 +98,17 @@ describe("loadConfig", () => {
 	it("applies overrides", () => {
 		const config = loadConfig({ maxTurns: 10 });
 		expect(config.maxTurns).toBe(10);
+	});
+
+	it("reads ANTHROPIC_BASE_URL into apiBaseUrl", () => {
+		process.env.ANTHROPIC_BASE_URL = "https://api.minimax.io/anthropic";
+		const config = loadConfig();
+		expect(config.apiBaseUrl).toBe("https://api.minimax.io/anthropic");
+	});
+
+	it("leaves apiBaseUrl undefined when ANTHROPIC_BASE_URL is not set", () => {
+		const config = loadConfig();
+		expect(config.apiBaseUrl).toBeUndefined();
 	});
 });
 

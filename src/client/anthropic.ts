@@ -4,6 +4,7 @@ import type { ContentBlock, LlmClient, LlmRequest, LlmResponse } from "./types.t
 interface AnthropicConfig {
 	model?: string;
 	apiKey?: string;
+	baseURL?: string;
 	_client?: SdkClient;
 }
 
@@ -80,11 +81,13 @@ export class AnthropicClient implements LlmClient {
 
 	private readonly model: string | undefined;
 	private readonly apiKey: string | undefined;
+	private readonly baseURL: string | undefined;
 	private sdkClient: SdkClient | null = null;
 
 	constructor(config?: AnthropicConfig) {
 		this.model = config?.model;
 		this.apiKey = config?.apiKey;
+		this.baseURL = config?.baseURL;
 		if (config?._client) {
 			this.sdkClient = config._client;
 		}
@@ -117,8 +120,11 @@ export class AnthropicClient implements LlmClient {
 			);
 		}
 
-		const ctor = AnthropicSdk as new (opts?: { apiKey?: string }) => SdkClient;
-		this.sdkClient = new ctor(this.apiKey ? { apiKey: this.apiKey } : undefined);
+		const ctor = AnthropicSdk as new (opts?: { apiKey?: string; baseURL?: string }) => SdkClient;
+		const opts: { apiKey?: string; baseURL?: string } = {};
+		if (this.apiKey) opts.apiKey = this.apiKey;
+		if (this.baseURL) opts.baseURL = this.baseURL;
+		this.sdkClient = new ctor(Object.keys(opts).length > 0 ? opts : undefined);
 		return this.sdkClient;
 	}
 
@@ -142,17 +148,16 @@ export class AnthropicClient implements LlmClient {
 				max_tokens: request.maxTokens ?? 8192,
 			});
 
-			const content: ContentBlock[] = response.content.map((block): ContentBlock => {
-				if (block.type === "text") {
-					return { type: "text", text: block.text };
+			// Filter to known block types — compatible providers (e.g. MiniMax) may
+			// return additional types like "thinking" that Sapling doesn't consume.
+			const content: ContentBlock[] = [];
+			for (const block of response.content) {
+				if (block.type === "text" && "text" in block) {
+					content.push({ type: "text", text: block.text });
+				} else if (block.type === "tool_use" && "name" in block) {
+					content.push({ type: "tool_use", id: block.id, name: block.name, input: block.input });
 				}
-				return {
-					type: "tool_use",
-					id: block.id,
-					name: block.name,
-					input: block.input,
-				};
-			});
+			}
 
 			const stopReason = response.stop_reason as "end_turn" | "tool_use" | "max_tokens";
 

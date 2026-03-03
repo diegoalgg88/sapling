@@ -108,6 +108,7 @@ export interface SaplingConfig {
 	json: boolean;
 	contextWindow: number;
 	contextBudget: ContextBudget;
+	apiBaseUrl?: string;
 }
 
 export interface RunOptions {

@@ -101,5 +101,8 @@ export function loadConfig(overrides: Partial<SaplingConfig> = {}): SaplingConfi
 		if (!Number.isNaN(n)) fromEnv.contextWindow = n;
 	}
 
+	const envBaseUrl = process.env.ANTHROPIC_BASE_URL;
+	if (envBaseUrl) fromEnv.apiBaseUrl = envBaseUrl;
+
 	return validateConfig({ ...fromEnv, ...overrides });
 }
