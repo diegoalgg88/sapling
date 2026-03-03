@@ -20,12 +20,28 @@ describe("validateConfig", () => {
 		expect(() => validateConfig({ maxTurns: 0 })).toThrow(ConfigError);
 	});
 
+	it("throws ConfigError for maxTurns NaN", () => {
+		expect(() => validateConfig({ maxTurns: NaN })).toThrow(ConfigError);
+	});
+
+	it("throws ConfigError for maxTurns Infinity", () => {
+		expect(() => validateConfig({ maxTurns: Infinity })).toThrow(ConfigError);
+	});
+
 	it("throws ConfigError for invalid backend", () => {
 		expect(() => validateConfig({ backend: "invalid" as "cc" })).toThrow(ConfigError);
 	});
 
 	it("throws ConfigError for contextWindow < 1000", () => {
 		expect(() => validateConfig({ contextWindow: 500 })).toThrow(ConfigError);
+	});
+
+	it("throws ConfigError for contextWindow NaN", () => {
+		expect(() => validateConfig({ contextWindow: NaN })).toThrow(ConfigError);
+	});
+
+	it("throws ConfigError for contextWindow Infinity", () => {
+		expect(() => validateConfig({ contextWindow: Infinity })).toThrow(ConfigError);
 	});
 
 	it("throws ConfigError when budget allocations exceed 1.0", () => {
