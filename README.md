@@ -147,7 +147,7 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 git clone https://github.com/jayminwest/sapling.git
 cd sapling
 bun install
-bun test                  # 279 tests across 19 files (921 expect() calls)
+bun test                  # 298 tests across 24 files (959 expect() calls)
 bun run lint              # Biome linting
 bun run typecheck         # TypeScript strict check
 ```
