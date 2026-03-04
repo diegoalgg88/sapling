@@ -9,7 +9,7 @@ describe("validateConfig", () => {
 	it("returns merged config with defaults", () => {
 		const config = validateConfig({});
 		expect(config.model).toBe(DEFAULT_CONFIG.model);
-		expect(config.backend).toBe("cc");
+		expect(config.backend).toBe("sdk");
 		expect(config.maxTurns).toBe(200);
 	});
 
@@ -160,7 +160,7 @@ describe("loadGuardConfig", () => {
 	});
 });
 
-describe("loadConfig CC session auto-detect", () => {
+describe("loadConfig backend defaults", () => {
 	let savedEnv: Record<string, string | undefined>;
 
 	beforeEach(() => {
@@ -168,6 +168,8 @@ describe("loadConfig CC session auto-detect", () => {
 			CLAUDECODE: process.env.CLAUDECODE,
 			SAPLING_BACKEND: process.env.SAPLING_BACKEND,
 		};
+		delete process.env.CLAUDECODE;
+		delete process.env.SAPLING_BACKEND;
 	});
 
 	afterEach(() => {
@@ -183,15 +185,18 @@ describe("loadConfig CC session auto-detect", () => {
 		}
 	});
 
-	it("auto-selects sdk when CLAUDECODE is set", () => {
-		process.env.CLAUDECODE = "1";
-		delete process.env.SAPLING_BACKEND;
+	it("defaults to sdk backend", () => {
 		const config = loadConfig();
 		expect(config.backend).toBe("sdk");
 	});
 
-	it("respects explicit SAPLING_BACKEND=cc even when CLAUDECODE is set", () => {
+	it("defaults to sdk even when CLAUDECODE is set", () => {
 		process.env.CLAUDECODE = "1";
+		const config = loadConfig();
+		expect(config.backend).toBe("sdk");
+	});
+
+	it("respects explicit SAPLING_BACKEND=cc override", () => {
 		process.env.SAPLING_BACKEND = "cc";
 		const config = loadConfig();
 		expect(config.backend).toBe("cc");

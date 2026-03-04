@@ -143,5 +143,52 @@
 		"status": "completed",
 		"createdAt": "2026-03-03T19:11:15.649Z",
 		"completedAt": "2026-03-03T19:20:46.489Z"
+	},
+	{
+		"id": "group-03f85288",
+		"name": "sapling-integration-features",
+		"memberIssueIds": [
+			"sapling-cc26",
+			"sapling-c452",
+			"sapling-8350",
+			"sapling-c152",
+			"sapling-394c"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-03T21:59:16.108Z",
+		"completedAt": "2026-03-03T22:39:23.366Z"
+	},
+	{
+		"id": "group-889311e9",
+		"name": "sapling-env-isolation",
+		"memberIssueIds": [
+			"sapling-5956"
+		],
+		"status": "active",
+		"createdAt": "2026-03-04T00:39:35.893Z",
+		"completedAt": null
+	},
+	{
+		"id": "group-aae0c113",
+		"name": "sapling-deprecation",
+		"memberIssueIds": [
+			"sapling-483b",
+			"sapling-23ee",
+			"sapling-f4ef",
+			"sapling-f32d"
+		],
+		"status": "active",
+		"createdAt": "2026-03-04T00:53:19.227Z",
+		"completedAt": null
+	},
+	{
+		"id": "group-91ae3df2",
+		"name": "sapling-rpc-mode",
+		"memberIssueIds": [
+			"sapling-232e"
+		],
+		"status": "completed",
+		"createdAt": "2026-03-04T01:46:52.420Z",
+		"completedAt": "2026-03-04T02:09:44.943Z"
 	}
 ]

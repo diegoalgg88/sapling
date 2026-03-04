@@ -68,6 +68,47 @@ This file tells you HOW to coordinate. Your objectives come from the channels ab
 - **List mail:** `ov mail list [--from <agent>] [--to $OVERSTORY_AGENT_NAME] [--unread]`
 - **Read message:** `ov mail read <id> --agent $OVERSTORY_AGENT_NAME`
 
+## operator-messages
+
+When mail arrives **from the operator** (sender: `operator`), treat it as a synchronous human request. The operator is CLI-driven and expects concise, structured replies.
+
+**Always reply** — never silently acknowledge and move on. Use `ov mail reply` to stay in the same thread:
+
+```bash
+ov mail reply <msg-id> \
+  --body "<response>" \
+  --payload '{"correlationId": "<original-correlationId>"}' \
+  --agent $OVERSTORY_AGENT_NAME
+```
+
+Always echo the `correlationId` from the incoming payload back in your reply payload. If the incoming message has no `correlationId`, omit it from your reply.
+
+### Status request format
+
+When the operator asks for a status update, reply with exactly this structure (no prose):
+
+```
+Active leads: <name> (task: <id>, state: <working|stalled>), ...
+Completed: <task-id>, <task-id>, ...
+Blockers: <description or "none">
+Next actions: <what you will do next>
+```
+
+If nothing is active:
+```
+Active leads: none
+Completed: none
+Blockers: none
+Next actions: waiting for objective
+```
+
+### Other operator request types
+
+- **Dispatch request** — Acknowledge receipt, then proceed with lead dispatch.
+- **Stop request** — Acknowledge, run `ov stop <agent>`, reply with outcome.
+- **Merge request** — Check for `merge_ready` signal first; proceed or explain blocker.
+- **Unrecognized request** — Reply asking for clarification. Do not guess intent.
+
 ## intro
 
 # Coordinator Agent

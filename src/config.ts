@@ -23,7 +23,7 @@ const DEFAULT_BUDGET: ContextBudget = {
 
 export const DEFAULT_CONFIG: SaplingConfig = {
 	model: "claude-sonnet-4-6",
-	backend: "cc",
+	backend: "sdk",
 	maxTurns: 200,
 	cwd: process.cwd(),
 	verbose: false,
@@ -124,9 +124,8 @@ export function loadConfig(overrides: Partial<SaplingConfig> = {}): SaplingConfi
 		fromEnv.backend = envBackend as LlmBackend;
 	}
 
-	if (!fromEnv.backend && process.env.CLAUDECODE) {
-		fromEnv.backend = "sdk";
-	}
+	// CLAUDECODE env var no longer overrides backend — SDK is already the default.
+	// Users who explicitly set SAPLING_BACKEND=cc/pi will get a deprecation warning.
 
 	const envMaxTurns = process.env.SAPLING_MAX_TURNS;
 	if (envMaxTurns) {

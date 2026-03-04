@@ -162,6 +162,10 @@ function serializeMessageContent(content: string | (ContentBlock | ToolResultBlo
 
 // ─── PiClient ─────────────────────────────────────────────────────────────────
 
+/**
+ * @deprecated Pi subprocess backend does not support tool calling. Use AnthropicClient (SDK backend) instead.
+ * Will be removed in v0.3.0.
+ */
 export class PiClient implements LlmClient {
 	readonly id = "pi";
 

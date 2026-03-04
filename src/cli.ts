@@ -14,6 +14,7 @@ import { createContextManager } from "./context/manager.ts";
 import { ConfigError } from "./errors.ts";
 import { EventEmitter } from "./hooks/events.ts";
 import { HookManager } from "./hooks/manager.ts";
+import { logger } from "./logging/logger.ts";
 import { runLoop } from "./loop.ts";
 import { RpcServer } from "./rpc/server.ts";
 import { createDefaultRegistry } from "./tools/index.ts";
@@ -88,6 +89,17 @@ export async function runCommand(
 		if (guardConfig) {
 			hookManager = new HookManager(guardConfig);
 		}
+	}
+
+	// Emit deprecation warning for CC and Pi subprocess backends
+	if (config.backend === "cc") {
+		logger.warn(
+			"CC subprocess backend is deprecated and does not support tool calling. Use --backend sdk (default) instead. CC backend will be removed in v0.3.0.",
+		);
+	} else if (config.backend === "pi") {
+		logger.warn(
+			"Pi subprocess backend is deprecated and does not support tool calling. Use --backend sdk (default) instead. Pi backend will be removed in v0.3.0.",
+		);
 	}
 
 	const client = createClient(config);
