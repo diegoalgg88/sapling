@@ -190,8 +190,7 @@ export async function runLoop(
 			logger.info("Agent loop aborted by RPC request");
 			options.eventEmitter?.emit({
 				type: "result",
-				outcome: "error",
-				summary: "aborted",
+				exitReason: "aborted",
 				totalTurns,
 				totalInputTokens,
 				totalOutputTokens,
@@ -211,6 +210,8 @@ export async function runLoop(
 			model: options.model,
 		};
 
+		options.setState?.({ turn: totalTurns, phase: "calling_llm" });
+
 		// ── Step 2: Call LLM with retry ───────────────────────────────────────
 		let response: LlmResponse;
 		try {
@@ -222,8 +223,7 @@ export async function runLoop(
 			options.eventEmitter?.emit({ type: "error", message, classification: code });
 			options.eventEmitter?.emit({
 				type: "result",
-				outcome: "error",
-				summary: message,
+				exitReason: "error",
 				totalTurns,
 				totalInputTokens,
 				totalOutputTokens,
@@ -274,8 +274,7 @@ export async function runLoop(
 			});
 			options.eventEmitter?.emit({
 				type: "result",
-				outcome: "success",
-				summary: finalText || "",
+				exitReason: "task_complete",
 				totalTurns,
 				totalInputTokens,
 				totalOutputTokens,
@@ -300,9 +299,10 @@ export async function runLoop(
 			Bun.spawn(options.eventConfig.onToolStart, { stdout: "ignore", stderr: "ignore" });
 		}
 
+		options.setState?.({ turn: totalTurns, phase: "executing_tools" });
+
 		const toolResultBlocks: ToolResultBlock[] = await Promise.all(
 			toolCalls.map(async (call): Promise<ToolResultBlock> => {
-				const argsSummary = JSON.stringify(call.input).slice(0, 200);
 				// Emit tool_start event before dispatching
 				options.eventEmitter?.emit({
 					type: "tool_start",
@@ -385,12 +385,12 @@ export async function runLoop(
 		// ── Step 7: Append tool results as user message ───────────────────────
 		messages.push({ role: "user", content: toolResultBlocks });
 
-		// ── Step 7b: Inject queued RPC steer/followUp ────────────────────────
-		// steer: appended to current tool results (decision mx-195088)
-		// followUp: injected as a standalone user message (sapling-f409)
+		// ── Step 7b: Inject queued RPC steer/followUp requests ───────────────
+		// Per decision mx-195088: steer appended to current turn's tool results.
+		// followUp injected as a standalone user message.
 		if (options.rpcServer) {
-			const rpcReq = options.rpcServer.dequeue();
-			if (rpcReq) {
+			let rpcReq = options.rpcServer.dequeue();
+			while (rpcReq) {
 				if (rpcReq.method === "steer") {
 					const lastMsg = messages[messages.length - 1];
 					if (lastMsg?.role === "user" && Array.isArray(lastMsg.content)) {
@@ -398,12 +398,12 @@ export async function runLoop(
 							type: "text",
 							text: `[STEER] ${rpcReq.params.content}`,
 						});
-						logger.debug(`RPC steer injected into turn ${totalTurns} tool results`);
 					}
 				} else if (rpcReq.method === "followUp") {
-					messages.push({ role: "user", content: rpcReq.params.content });
-					logger.debug(`RPC followUp injected as new user message after turn ${totalTurns}`);
+					messages.push({ role: "user", content: `[FOLLOWUP] ${rpcReq.params.content}` });
 				}
+				logger.debug(`RPC ${rpcReq.method} injected into turn ${totalTurns}`);
+				rpcReq = options.rpcServer.dequeue();
 			}
 		}
 
@@ -412,6 +412,8 @@ export async function runLoop(
 		const managed = contextManager.process(messages as Message[], response.usage, currentFiles);
 		// Replace the message array in-place with the managed version
 		messages.splice(0, messages.length, ...(managed as LoopMessage[]));
+
+		options.setState?.({ turn: totalTurns, phase: "idle" });
 
 		// Emit turn_end with cumulative token counts and context utilization ratio
 		const turnUtil = contextManager.getUtilization();
@@ -435,8 +437,7 @@ export async function runLoop(
 	});
 	options.eventEmitter?.emit({
 		type: "result",
-		outcome: "max_turns",
-		summary: `max turns reached (${maxTurns})`,
+		exitReason: "max_turns",
 		totalTurns,
 		totalInputTokens,
 		totalOutputTokens,
