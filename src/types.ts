@@ -74,6 +74,14 @@ export interface IHookManager {
 	postToolCall(toolName: string, result: string): void;
 }
 
+/** Minimal interface for RPC server — avoids circular import with rpc/server.ts. */
+export interface IRpcServer {
+	/** Dequeue the next steer/followUp request. Returns undefined if queue is empty. */
+	dequeue(): { method: string; params: { content: string } } | undefined;
+	/** Returns true if an abort request has been received. */
+	isAbortRequested(): boolean;
+}
+
 export interface LoopOptions {
 	task: string;
 	systemPrompt: string;
@@ -84,6 +92,8 @@ export interface LoopOptions {
 	hookManager?: IHookManager;
 	/** Optional event emitter for NDJSON per-turn events (--json mode). */
 	eventEmitter?: { emit(event: Record<string, unknown>): void };
+	/** Optional RPC server for JSON-RPC stdin control channel (--mode rpc). */
+	rpcServer?: IRpcServer;
 }
 
 export interface LoopResult {
@@ -133,6 +143,7 @@ export interface RunOptions {
 	quiet?: boolean;
 	json?: boolean;
 	guardsFile?: string;
+	rpcMode?: boolean;
 }
 
 // ─── Context Types ────────────────────────────────────────────────────────────

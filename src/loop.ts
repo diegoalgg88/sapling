@@ -172,6 +172,19 @@ export async function runLoop(
 	});
 
 	while (totalTurns < maxTurns) {
+		// ── RPC abort check — before starting a new turn ─────────────────────
+		if (options.rpcServer?.isAbortRequested()) {
+			logger.info("Agent loop aborted by RPC request");
+			options.eventEmitter?.emit({
+				type: "run_complete",
+				exitReason: "aborted",
+				totalTurns,
+				totalInputTokens,
+				totalOutputTokens,
+			});
+			return { exitReason: "aborted", totalTurns, totalInputTokens, totalOutputTokens };
+		}
+
 		totalTurns++;
 		options.eventEmitter?.emit({ type: "turn_start", turn: totalTurns });
 
@@ -333,6 +346,23 @@ export async function runLoop(
 
 		// ── Step 7: Append tool results as user message ───────────────────────
 		messages.push({ role: "user", content: toolResultBlocks });
+
+		// ── Step 7b: Inject queued RPC steer/followUp into tool results ───────
+		// Per decision mx-195088: steered content appended to current turn's
+		// tool results (same user message), not as a separate user message.
+		if (options.rpcServer) {
+			const rpcReq = options.rpcServer.dequeue();
+			if (rpcReq) {
+				const lastMsg = messages[messages.length - 1];
+				if (lastMsg?.role === "user" && Array.isArray(lastMsg.content)) {
+					(lastMsg.content as Array<ContentBlock | ToolResultBlock>).push({
+						type: "text",
+						text: `[${rpcReq.method.toUpperCase()}] ${rpcReq.params.content}`,
+					});
+					logger.debug(`RPC ${rpcReq.method} injected into turn ${totalTurns} tool results`);
+				}
+			}
+		}
 
 		// ── Step 8: Run context manager ───────────────────────────────────────
 		const currentFiles = extractCurrentFiles(messages);
