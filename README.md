@@ -51,6 +51,11 @@ sapling run <prompt>            Execute a task
   --mode <rpc>                    Execution mode: one-shot (default) or rpc
   --quiet, -q                     Suppress non-essential output
 
+sapling auth set <provider>     Store API key for a provider (anthropic, minimax)
+  --base-url <url>                Custom API base URL for the provider
+sapling auth show               Show configured providers
+sapling auth remove <provider>  Remove stored credentials
+
 sapling version                 Print version
   --json                          Output as JSON envelope
 
@@ -93,6 +98,7 @@ sapling/
     test-helpers.ts       Shared test utilities (temp dirs, mock factories)
     integration.test.ts   End-to-end tests (real API, gated behind SAPLING_INTEGRATION_TESTS=1)
     commands/
+      auth.ts             API key management (set, show, remove providers)
       completions.ts      Shell completion script generator (bash, zsh, fish)
       upgrade.ts          Self-upgrade from npm
       doctor.ts           Environment health checks
@@ -141,11 +147,11 @@ sapling/
 
 | Backend | Billing | Method |
 |---------|---------|--------|
-| `cc` (default) | Claude Code subscription | `claude -p` subprocess |
-| `pi` | Provider-dependent | `pi` subprocess (JSONL events) |
-| `sdk` | Anthropic API per-token | `@anthropic-ai/sdk` direct calls |
+| `sdk` (recommended) | Anthropic API per-token | `@anthropic-ai/sdk` direct calls |
+| `cc` (deprecated) | Claude Code subscription | `claude -p` subprocess |
+| `pi` (deprecated) | Provider-dependent | `pi` subprocess (JSONL events) |
 
-The SDK backend auto-detects when running inside a Claude Code session. The CC subprocess backend uses Claude Code as a structured-output endpoint — Sapling owns the agent loop, tools, and context management. CC just handles auth and billing. The Pi backend communicates via JSONL events with a `pi` subprocess, enabling multi-provider model access.
+The SDK backend is the recommended default and auto-detects when running inside a Claude Code session. Model aliases (`sonnet`, `opus`, `haiku`) resolve to full model IDs automatically. The CC and Pi subprocess backends are deprecated and emit warnings on use. Use `sp auth set anthropic` to store your API key persistently.
 
 ## Part of os-eco
 
@@ -168,6 +174,7 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 | `SAPLING_MAX_TURNS` | `200` | Maximum agent turns |
 | `SAPLING_CONTEXT_WINDOW` | `200000` | Context window size in tokens |
 | `ANTHROPIC_BASE_URL` | — | Custom API base URL for compatible providers |
+| `ANTHROPIC_AUTH_TOKEN` | — | Fallback for `ANTHROPIC_API_KEY` |
 
 ## Development
 
@@ -175,7 +182,7 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 git clone https://github.com/jayminwest/sapling.git
 cd sapling
 bun install
-bun test                  # 470 tests across 32 files (1273 expect() calls)
+bun test                  # 520 tests across 33 files (1400 expect() calls)
 bun run lint              # Biome linting
 bun run typecheck         # TypeScript strict check
 ```

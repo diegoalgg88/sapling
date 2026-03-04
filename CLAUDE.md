@@ -11,7 +11,7 @@ Sapling (`@os-eco/sapling-cli`, CLI: `sp` / `sapling`) is a headless coding agen
 All commands use **Bun** as the runtime. There is no build/compile step — TypeScript runs directly.
 
 ```bash
-bun test                  # Run all 470 tests (32 files, 1273 expect() calls)
+bun test                  # Run all 520 tests (33 files, 1400 expect() calls)
 bun test src/loop.test.ts # Run a single test file
 bun run lint              # Lint (Biome)
 bun run lint:fix          # Lint + auto-fix
@@ -35,9 +35,9 @@ Each turn: call LLM → if no tool calls, stop → execute all tool calls in par
 ### LLM clients (`src/client/`)
 
 Three backends implementing `LlmClient` from `src/types.ts`:
-- **CcClient** (`cc.ts`, default) — spawns `claude` subprocess with `--output-format json` and `--json-schema`, parses structured JSON response
-- **PiClient** (`pi.ts`) — spawns `pi` subprocess, communicates via JSONL events; supports multi-provider models
-- **AnthropicClient** (`anthropic.ts`) — calls Anthropic SDK directly; `@anthropic-ai/sdk` is an optional dep, dynamically imported; supports `ANTHROPIC_BASE_URL` for compatible providers
+- **CcClient** (`cc.ts`, deprecated) — spawns `claude` subprocess with `--output-format json` and `--json-schema`, parses structured JSON response
+- **PiClient** (`pi.ts`, deprecated) — spawns `pi` subprocess, communicates via JSONL events; supports multi-provider models
+- **AnthropicClient** (`anthropic.ts`, recommended) — calls Anthropic SDK directly; `@anthropic-ai/sdk` is an optional dep, dynamically imported; supports `ANTHROPIC_BASE_URL` and model alias resolution
 
 ### Context pipeline (`src/context/`)
 
@@ -66,7 +66,7 @@ Structured logger (`logger.ts`) with JSON output support and color control (`col
 
 ### CLI commands (`src/commands/`)
 
-Subcommands registered from `src/index.ts`: `completions` (shell completion scripts for bash/zsh/fish), `upgrade` (check/install latest version), `doctor` (health checks), `version` (shared version utilities). `typo.ts` provides Levenshtein-based command suggestions for unknown commands.
+Subcommands registered from `src/index.ts`: `auth` (API key management in `~/.sapling/auth.json`), `completions` (shell completion scripts for bash/zsh/fish), `upgrade` (check/install latest version), `doctor` (health checks), `version` (shared version utilities). `typo.ts` provides Levenshtein-based command suggestions for unknown commands.
 
 ### Other source files
 
@@ -89,7 +89,7 @@ Three system prompt files emitted by Canopy: **builder** (writes code), **review
 - **Tabs for indentation**, 100-char line width (Biome).
 - **Tests are colocated** — `src/foo.test.ts` next to `src/foo.ts`. Tests use real temp directories (helpers in `src/test-helpers.ts`).
 - **Error hierarchy** in `src/errors.ts`: `SaplingError` base → `ClientError`, `ToolError`, `ContextError`, `ConfigError`.
-- **Config** (`src/config.ts`) supports env vars: `SAPLING_MODEL`, `SAPLING_BACKEND`, `SAPLING_MAX_TURNS`, `SAPLING_CONTEXT_WINDOW`, `ANTHROPIC_BASE_URL`.
+- **Config** (`src/config.ts`) supports env vars: `SAPLING_MODEL`, `SAPLING_BACKEND`, `SAPLING_MAX_TURNS`, `SAPLING_CONTEXT_WINDOW`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`. Falls back to `~/.sapling/auth.json` credentials. Model alias resolution (e.g., `sonnet` → `claude-sonnet-4-6`).
 - **Agent prompt files in `agents/`** are emitted by Canopy — do not manually edit them. Use `cn update <name>` then `cn emit`.
 - **JSONL data files** (`.mulch/`, `.seeds/`, `.canopy/`) use `merge=union` git strategy (see `.gitattributes`).
 

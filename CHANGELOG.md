@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-03-04
+
+### Added
+
+#### Auth Command
+- New `sp auth` command (`src/commands/auth.ts`) for global API key management in `~/.sapling/auth.json`
+- Subcommands: `auth set <provider>`, `auth show`, `auth remove <provider>`
+- Supports `anthropic` and `minimax` providers with optional `--base-url` override
+- Auth store wired into `loadConfig` as credential fallback when env vars are unset
+- Full test coverage (`src/commands/auth.test.ts`)
+
+#### Event System Overhaul
+- Standardized NDJSON event stream for overstory `parseEvents()` compatibility
+- Renamed events for consistency; added `setState` event for agent state broadcasting
+- New `progress()` event for dashboard visibility of long-running operations
+- `EventConfig` lifecycle hooks (`onStart`, `onEnd`) for overstory watchdog heartbeats
+- All RPC requests drained per turn (not just one) for reliable multi-request handling
+
+#### RPC Enhancements
+- New `getState` RPC method for synchronous agent health queries
+- `followUp` RPC injection differentiated from `steer` in the loop (no `[FOLLOWUP]` prefix)
+- RPC acknowledgment events include `argsSummary` field
+
+#### Backend Changes
+- CC and Pi subprocess backends deprecated in favor of SDK-only (warnings emitted on use)
+- Model alias resolution — short names like `sonnet` or `opus` resolve to full model IDs
+- `ANTHROPIC_AUTH_TOKEN` supported as fallback for `ANTHROPIC_API_KEY`
+- `CLAUDECODE` dead code removed from backend detection
+
+#### Doctor
+- `sp doctor` now checks auth store status and reports configured providers
+
+#### Testing
+- New auth command tests (`src/commands/auth.test.ts`) — 214 lines
+- New RPC server tests for `getState` method
+- New RPC channel tests for multi-request draining
+- New loop tests for event lifecycle hooks and follow-up injection
+- New event emitter tests for `progress()`, `setState`, and lifecycle hooks
+
+### Fixed
+- `[FOLLOWUP]` prefix no longer injected into follow-up task context (was polluting LLM input)
+- Missing `argsSummary` in RPC acknowledgment events
+- Auth store credential fallback wired into config loading (keys from `~/.sapling/auth.json` now used when env vars are absent)
+
+### Changed
+- Test suite grown from 470 tests / 32 files / 1273 expects to 520 tests / 33 files / 1400 expects
+- Event names standardized for overstory compatibility (breaking change for `--json` consumers)
+- CC and Pi backends emit deprecation warnings; SDK is now the recommended backend
+
 ## [0.1.4] - 2026-03-03
 
 ### Added
@@ -237,7 +286,8 @@ Initial release of Sapling — a headless coding agent with proactive context ma
 - Real temp directory helpers (`src/test-helpers.ts`)
 - Full coverage of: agent loop, context pipeline (all 5 stages), both LLM clients, all 6 tools, config validation, error hierarchy
 
-[Unreleased]: https://github.com/jayminwest/sapling/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/jayminwest/sapling/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/jayminwest/sapling/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/jayminwest/sapling/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/jayminwest/sapling/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/jayminwest/sapling/compare/v0.1.1...v0.1.2
