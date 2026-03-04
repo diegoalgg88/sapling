@@ -59,19 +59,24 @@ program
 	.option("--timing", "Output elapsed execution time to stderr") // sapling-bcb3
 	.option("-q, --quiet", "Suppress non-essential output")
 	.option("--guards-file <path>", "Path to guards config JSON file")
+	.option("--mode <mode>", "Execution mode: one-shot (default) or rpc")
 	.action(
 		async (prompt: string | undefined, options: Record<string, string | boolean | undefined>) => {
 			try {
-				// Read from stdin if no prompt and input is piped (sapling-fe2c)
-				if (!prompt && !process.stdin.isTTY) {
+				const isRpcMode = (options.mode as string | undefined) === "rpc";
+
+				// In RPC mode, stdin is the control channel — prompt must be a CLI arg
+				if (!isRpcMode && !prompt && !process.stdin.isTTY) {
+					// Read from stdin if no prompt and input is piped (sapling-fe2c)
 					prompt = (await Bun.stdin.text()).trim();
 				}
 
 				// Validate prompt is non-empty (sapling-5ad6)
 				if (!prompt || !prompt.trim()) {
-					process.stderr.write(
-						"Error: prompt must not be empty. Provide as argument or pipe via stdin.\n",
-					);
+					const hint = isRpcMode
+						? " In --mode rpc, stdin is the control channel; provide prompt as argument."
+						: " Provide as argument or pipe via stdin.";
+					process.stderr.write(`Error: prompt must not be empty.${hint}\n`);
 					process.exitCode = 1;
 					return;
 				}
@@ -83,8 +88,10 @@ program
 					maxTurns: options.maxTurns ? parseInt(options.maxTurns as string, 10) : undefined,
 					verbose: options.verbose as boolean | undefined,
 					quiet: options.quiet as boolean | undefined,
-					json: options.json as boolean | undefined,
+					// RPC mode implicitly enables --json
+					json: isRpcMode ? true : (options.json as boolean | undefined),
 					guardsFile: options.guardsFile as string | undefined,
+					rpcMode: isRpcMode,
 				};
 
 				const config = loadConfig({

@@ -20,6 +20,7 @@ import type {
 	BudgetUtilization,
 	ContextArchive,
 	ContextManager,
+	IRpcServer,
 	LlmClient,
 	LlmResponse,
 	LoopOptions,
@@ -589,5 +590,112 @@ describe("runLoop", () => {
 		};
 		expect(callsAccessor.calls[0]?.systemPrompt).toBe("Custom system prompt");
 		expect(callsAccessor.calls[0]?.model).toBe("claude-opus-4-6");
+	});
+
+	// ── RPC server integration ───────────────────────────────────────────────
+
+	it("returns aborted when rpcServer.isAbortRequested() is true before first turn", async () => {
+		const rpcServer: IRpcServer = {
+			dequeue: () => undefined,
+			isAbortRequested: () => true,
+		};
+		const client = createMockClient([mockTextResponse("should not be called")]);
+		const registry = createRegistry([]);
+		const opts = defaultOptions(testDir, { rpcServer });
+
+		const result = await runLoop(client, registry, ctx, opts);
+
+		expect(result.exitReason).toBe("aborted");
+		expect(result.totalTurns).toBe(0);
+	});
+
+	it("returns aborted after one tool turn when abort is set", async () => {
+		let abortAfterFirstTurn = false;
+		const rpcServer: IRpcServer = {
+			dequeue: () => undefined,
+			isAbortRequested: () => abortAfterFirstTurn,
+		};
+
+		const responses: LlmResponse[] = [
+			mockToolUseResponse("echo", { message: "hi" }, "tc1"),
+			// Second turn should not be reached
+			mockTextResponse("done"),
+		];
+		const client = createMockClient(responses);
+		const registry = createRegistry([createEchoTool()]);
+		const opts = defaultOptions(testDir, { rpcServer });
+
+		// Set abort flag after tool turn completes
+		const origCtx = ctx;
+		let processCount = 0;
+		const trackingCtx: ContextManager = {
+			process(messages: Message[], usage: TokenUsage, files: string[]): Message[] {
+				processCount++;
+				if (processCount === 1) abortAfterFirstTurn = true;
+				return origCtx.process(messages, usage, files);
+			},
+			getUtilization: origCtx.getUtilization,
+			getArchive: origCtx.getArchive,
+		};
+
+		const result = await runLoop(client, registry, trackingCtx, opts);
+
+		expect(result.exitReason).toBe("aborted");
+		expect(result.totalTurns).toBe(1);
+	});
+
+	it("injects steer request into tool results when dequeued", async () => {
+		let dequeueCount = 0;
+		const rpcServer: IRpcServer = {
+			dequeue: () => {
+				// Return steer request on first dequeue (after turn 1 tool results)
+				if (dequeueCount === 0) {
+					dequeueCount++;
+					return { method: "steer", params: { content: "change approach" } };
+				}
+				return undefined;
+			},
+			isAbortRequested: () => false,
+		};
+
+		const responses: LlmResponse[] = [
+			mockToolUseResponse("echo", { message: "hello" }, "tc1"),
+			mockTextResponse("done with steering"),
+		];
+		const client = createMockClient(responses);
+		const registry = createRegistry([createEchoTool()]);
+		const opts = defaultOptions(testDir, { rpcServer });
+
+		const result = await runLoop(client, registry, ctx, opts);
+
+		expect(result.exitReason).toBe("task_complete");
+		expect(result.totalTurns).toBe(2);
+
+		// The second LLM call should have received the steer content in its messages
+		const callsAccessor = client as unknown as { calls: { messages: Message[] }[] };
+		const secondCallMessages = callsAccessor.calls[1]?.messages;
+		expect(secondCallMessages).toBeDefined();
+
+		// Find the user message that contains steer content
+		const hasSteer = secondCallMessages?.some((m) => {
+			if (m.role !== "user" || typeof m.content === "string") return false;
+			return m.content.some(
+				(b) => b.type === "text" && (b as { type: "text"; text: string }).text.includes("[STEER]"),
+			);
+		});
+		expect(hasSteer).toBe(true);
+	});
+
+	it("loop works normally without rpcServer", async () => {
+		const responses: LlmResponse[] = [
+			mockToolUseResponse("echo", { message: "ok" }, "tc1"),
+			mockTextResponse("done"),
+		];
+		const client = createMockClient(responses);
+		const registry = createRegistry([createEchoTool()]);
+		// No rpcServer in opts
+		const result = await runLoop(client, registry, ctx, defaultOptions(testDir));
+
+		expect(result.exitReason).toBe("task_complete");
 	});
 });

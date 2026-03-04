@@ -15,6 +15,7 @@ import { ConfigError } from "./errors.ts";
 import { EventEmitter } from "./hooks/events.ts";
 import { HookManager } from "./hooks/manager.ts";
 import { runLoop } from "./loop.ts";
+import { RpcServer } from "./rpc/server.ts";
 import { createDefaultRegistry } from "./tools/index.ts";
 import type { LlmClient, LoopOptions, RunOptions, SaplingConfig } from "./types.ts";
 
@@ -98,6 +99,11 @@ export async function runCommand(
 
 	const eventEmitter = new EventEmitter(config.json);
 
+	// RPC mode: open stdin as a control channel for mid-task steering
+	const rpcServer = opts.rpcMode
+		? new RpcServer(Bun.stdin.stream() as ReadableStream<Uint8Array>, eventEmitter)
+		: undefined;
+
 	const loopOptions: LoopOptions = {
 		task: prompt,
 		systemPrompt,
@@ -106,6 +112,7 @@ export async function runCommand(
 		cwd: config.cwd,
 		hookManager: hookManager ?? undefined,
 		eventEmitter,
+		rpcServer,
 	};
 
 	return runLoop(client, tools, contextManager, loopOptions);
