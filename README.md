@@ -49,6 +49,7 @@ sapling run <prompt>            Execute a task
   --timing                        Show elapsed time on stderr
   --guards-file <path>            Path to guards config JSON file
   --mode <rpc>                    Execution mode: one-shot (default) or rpc
+  --context-pipeline <v0|v1>      Context pipeline version (v1 is default)
   --quiet, -q                     Suppress non-essential output
 
 sapling auth set <provider>     Store API key for a provider (anthropic, minimax)
@@ -73,13 +74,13 @@ Existing coding agents (Claude Code, Pi, Codex) treat context management as an a
 
 ### The Solution
 
-Sapling manages context continuously, like garbage collection in a managed runtime. After every turn:
+Sapling manages context continuously, like garbage collection in a managed runtime. The v1 pipeline (default) processes every turn through five stages:
 
-1. **Measure** — Count tokens per category. Are we over budget?
-2. **Score** — Rate each message's relevance to the current subtask
-3. **Prune** — Truncate large results, summarize old turns, drop stale reads
-4. **Archive** — Move pruned content to a compact working memory
-5. **Reshape** — Rebuild the message array: task + archive + recent turns
+1. **Ingest** — Parse messages into paired Turn objects, extract metadata (files, errors, decisions)
+2. **Evaluate** — Score each turn's relevance to the current subtask (0–1)
+3. **Compact** — Summarize low-scoring turns, truncate large tool outputs
+4. **Budget** — Allocate tokens across system/archive/history/current zones
+5. **Render** — Assemble the final message array: task + archive + recent turns
 
 The LLM never sees a bloated context. Every piece of information has earned its place.
 
@@ -118,12 +119,21 @@ sapling/
       glob.ts             File pattern matching
       index.ts            Tool registry + createDefaultRegistry()
     context/
-      manager.ts          Pipeline orchestrator (SaplingContextManager)
+      manager.ts          v0 pipeline orchestrator (SaplingContextManager)
       measure.ts          Token budget tracking (4 chars/token heuristic)
       score.ts            Relevance scoring (recency, file overlap, error, decision, size)
       prune.ts            Message truncation + summarization strategies
       archive.ts          Rolling work summary + file modification tracking
       reshape.ts          Message array reconstruction
+      v1/
+        pipeline.ts       v1 pipeline orchestrator (SaplingPipelineV1)
+        ingest.ts         Parse messages into paired Turn objects with metadata
+        evaluate.ts       Score turns 0–1 with weighted signals
+        compact.ts        Summarize low-scoring turns, truncate large outputs
+        budget.ts         Token allocation across system/archive/history/current
+        render.ts         Assemble final messages with archive + system prompt
+        templates.ts      Template-based archive rendering
+        types.ts          v1 type definitions (Turn, TurnMetadata, PipelineState)
     hooks/
       guards.ts           Guard evaluators (blockedTools, readOnly, pathBoundary, fileScope, blockedBashPatterns)
       manager.ts          HookManager — pre/post tool call guard hooks
@@ -182,7 +192,7 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 git clone https://github.com/jayminwest/sapling.git
 cd sapling
 bun install
-bun test                  # 520 tests across 33 files (1400 expect() calls)
+bun test                  # 744 tests across 39 files (2807 expect() calls)
 bun run lint              # Biome linting
 bun run typecheck         # TypeScript strict check
 ```

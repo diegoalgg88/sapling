@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-04
+
+### Added
+
+#### Context Pipeline v1
+- Complete rewrite of the inter-turn context management pipeline (`src/context/v1/`)
+- Five new pipeline stages replacing the v0 measure/score/prune/archive/reshape approach:
+  - **Ingest** (`ingest.ts`) — parses raw messages into paired `Turn` objects with extracted metadata (files touched, errors, decisions, questions)
+  - **Evaluate** (`evaluate.ts`) — scores each turn 0–1 using weighted signals (recency, file overlap, error context, decision content, unresolved questions, size penalty)
+  - **Compact** (`compact.ts`) — summarizes low-scoring turns and truncates large tool outputs while preserving turn structure
+  - **Budget** (`budget.ts`) — token budget allocation and enforcement across system/archive/history/current zones
+  - **Render** (`render.ts`) — assembles final message array with archive block and system prompt composition
+- `SaplingPipelineV1` orchestrator class with stateful per-turn processing
+- Template-based archive rendering (`templates.ts`) — no LLM calls needed for summarization
+- Full type system (`types.ts`) with `Turn`, `TurnMetadata`, `PipelineState`, `StageResult`, and stage-specific types
+- `--context-pipeline <v0|v1>` CLI flag — v1 is the default; use `--context-pipeline v0` to fall back to the legacy pipeline
+- Design document (`docs/context-pipeline-v1.md`) with architecture, stage specifications, and rationale
+
+#### Benchmarking Expansion
+- Expanded benchmark scenarios from 14 to full coverage of v1 pipeline workloads (`src/bench/scenarios.ts` — 2125 lines)
+- Enhanced benchmark harness (`src/bench/harness.ts` — 638 lines) with v1 pipeline support
+- Extended harness tests (`src/bench/harness.test.ts` — 538 lines)
+
+#### Testing
+- 6 new test files for v1 pipeline stages: `ingest.test.ts` (565 lines), `compact.test.ts` (498 lines), `render.test.ts` (495 lines), `budget.test.ts` (414 lines), `pipeline.test.ts` (382 lines), `evaluate.test.ts` (359 lines)
+- All 60 lint warnings in scoped test files resolved
+
+### Changed
+- Agent loop (`src/loop.ts`) updated to support both v0 and v1 pipelines — v1 uses `SaplingPipelineV1.process()` with turn hints instead of `SaplingContextManager`
+- `RunOptions` and `LoopOptions` extended with `contextPipeline` and `contextWindowSize` fields
+- RPC server extended with pipeline-aware state reporting
+- Test suite grown from 520 tests / 33 files / 1400 expects to 744 tests / 39 files / 2807 expects
+
 ## [0.1.5] - 2026-03-04
 
 ### Added
@@ -286,7 +319,8 @@ Initial release of Sapling — a headless coding agent with proactive context ma
 - Real temp directory helpers (`src/test-helpers.ts`)
 - Full coverage of: agent loop, context pipeline (all 5 stages), both LLM clients, all 6 tools, config validation, error hierarchy
 
-[Unreleased]: https://github.com/jayminwest/sapling/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/jayminwest/sapling/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jayminwest/sapling/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/jayminwest/sapling/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/jayminwest/sapling/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/jayminwest/sapling/compare/v0.1.2...v0.1.3

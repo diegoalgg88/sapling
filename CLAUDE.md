@@ -11,7 +11,7 @@ Sapling (`@os-eco/sapling-cli`, CLI: `sp` / `sapling`) is a headless coding agen
 All commands use **Bun** as the runtime. There is no build/compile step — TypeScript runs directly.
 
 ```bash
-bun test                  # Run all 520 tests (33 files, 1400 expect() calls)
+bun test                  # Run all 744 tests (39 files, 2807 expect() calls)
 bun test src/loop.test.ts # Run a single test file
 bun run lint              # Lint (Biome)
 bun run lint:fix          # Lint + auto-fix
@@ -30,7 +30,7 @@ Quality gate before finishing work: `bun test && bun run lint && bun run typeche
 
 ### Agent loop (`src/loop.ts`)
 
-Each turn: call LLM → if no tool calls, stop → execute all tool calls in parallel (`Promise.all`) → append results → run context manager on message array → next turn. Stops on: task complete (no tools), max turns (200), or unrecoverable error. LLM errors use exponential backoff (3 retries, immediate abort on auth/model errors).
+Each turn: call LLM → if no tool calls, stop → execute all tool calls in parallel (`Promise.all`) → append results → run context manager (v0) or v1 pipeline on message array → next turn. Stops on: task complete (no tools), max turns (200), or unrecoverable error. LLM errors use exponential backoff (3 retries, immediate abort on auth/model errors).
 
 ### LLM clients (`src/client/`)
 
@@ -41,12 +41,21 @@ Three backends implementing `LlmClient` from `src/types.ts`:
 
 ### Context pipeline (`src/context/`)
 
-Runs every turn via `SaplingContextManager.process()`:
+**v0** (legacy) — Runs every turn via `SaplingContextManager.process()`:
 1. **Measure** (`measure.ts`) — token budget tracking (4 chars/token heuristic, window split: 15% system, 10% archive, 40% history, 15% current, 20% headroom)
 2. **Score** (`score.ts`) — relevance score 0–1 per message (recency 0.30, file overlap 0.25, error context 0.20, decision content 0.12, unresolved question 0.08, size penalty 0.05)
 3. **Prune** (`prune.ts`) — truncate large bash output, replace stale file reads, summarize/drop low-score old messages
 4. **Archive** (`archive.ts`) — dropped messages become a rolling work summary (template-based, no LLM call)
 5. **Reshape** (`reshape.ts`) — rebuild: [task] → [archive] → [pruned history] → [current turn]
+
+**v1** (`src/context/v1/`) — Turn-based pipeline with `SaplingPipelineV1.process()`:
+1. **Ingest** (`ingest.ts`) — parses messages into paired `Turn` objects, extracts metadata (files, errors, decisions, questions)
+2. **Evaluate** (`evaluate.ts`) — scores turns 0–1 using weighted signals (recency, file overlap, error context, decisions, questions, size)
+3. **Compact** (`compact.ts`) — summarizes low-scoring turns, truncates large tool outputs
+4. **Budget** (`budget.ts`) — token allocation and enforcement across system/archive/history/current zones
+5. **Render** (`render.ts`) — assembles final message array with archive and composed system prompt
+
+Types in `types.ts`, archive templates in `templates.ts`. v1 is the default; use `--context-pipeline v0` to fall back to the legacy pipeline.
 
 ### Benchmarking (`src/bench/`)
 
