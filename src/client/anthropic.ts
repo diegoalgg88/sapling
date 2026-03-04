@@ -1,5 +1,5 @@
 import { ClientError } from "../errors.ts";
-import type { ContentBlock, LlmClient, LlmRequest, LlmResponse } from "./types.ts";
+import type { ContentBlock, LlmClient, LlmRequest, LlmResponse } from "../types.ts";
 
 interface AnthropicConfig {
 	model?: string;

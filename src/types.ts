@@ -131,7 +131,7 @@ export interface SessionRecord {
 
 // ─── Config Types ─────────────────────────────────────────────────────────────
 
-export type LlmBackend = "cc" | "pi" | "sdk";
+export type LlmBackend = "sdk";
 
 export interface ContextBudget {
 	windowSize: number;

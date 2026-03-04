@@ -38,7 +38,7 @@ export const DEFAULT_CONFIG: SaplingConfig = {
 	contextBudget: DEFAULT_BUDGET,
 };
 
-const VALID_BACKENDS: LlmBackend[] = ["cc", "pi", "sdk"];
+const VALID_BACKENDS: LlmBackend[] = ["sdk"];
 
 /** Known provider base URLs for Anthropic-compatible APIs. */
 const PROVIDER_BASE_URLS: Record<string, string> = {

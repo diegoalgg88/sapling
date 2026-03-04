@@ -32,12 +32,9 @@ Quality gate before finishing work: `bun test && bun run lint && bun run typeche
 
 Each turn: call LLM → if no tool calls, stop → execute all tool calls in parallel (`Promise.all`) → append results → run v1 context pipeline on message array → next turn. Stops on: task complete (no tools), max turns (200), or unrecoverable error. LLM errors use exponential backoff (3 retries, immediate abort on auth/model errors).
 
-### LLM clients (`src/client/`)
+### LLM client (`src/client/`)
 
-Three backends implementing `LlmClient` from `src/types.ts`:
-- **CcClient** (`cc.ts`, deprecated) — spawns `claude` subprocess with `--output-format json` and `--json-schema`, parses structured JSON response
-- **PiClient** (`pi.ts`, deprecated) — spawns `pi` subprocess, communicates via JSONL events; supports multi-provider models
-- **AnthropicClient** (`anthropic.ts`, recommended) — calls Anthropic SDK directly; `@anthropic-ai/sdk` is an optional dep, dynamically imported; supports `ANTHROPIC_BASE_URL` and model alias resolution
+**AnthropicClient** (`anthropic.ts`) — calls Anthropic SDK directly; `@anthropic-ai/sdk` is an optional dep, dynamically imported; supports `ANTHROPIC_BASE_URL` and model alias resolution
 
 ### Context pipeline (`src/context/v1/`)
 

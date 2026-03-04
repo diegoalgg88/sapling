@@ -42,7 +42,7 @@ describe("validateConfig", () => {
 	});
 
 	it("throws ConfigError for invalid backend", () => {
-		expect(() => validateConfig({ backend: "invalid" as "cc" })).toThrow(ConfigError);
+		expect(() => validateConfig({ backend: "invalid" as "sdk" })).toThrow(ConfigError);
 	});
 
 	it("throws ConfigError for contextWindow < 1000", () => {
@@ -247,10 +247,10 @@ describe("loadConfig backend defaults", () => {
 		expect(config.backend).toBe("sdk");
 	});
 
-	it("respects explicit SAPLING_BACKEND=cc override", async () => {
-		process.env.SAPLING_BACKEND = "cc";
+	it("ignores invalid SAPLING_BACKEND values", async () => {
+		process.env.SAPLING_BACKEND = "invalid";
 		const config = await loadConfig();
-		expect(config.backend).toBe("cc");
+		expect(config.backend).toBe("sdk");
 	});
 });
 

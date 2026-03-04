@@ -41,7 +41,7 @@ sp run "Add error handling" --json
 sapling run <prompt>            Execute a task
   --model <name>                  Model to use (default: MiniMax-M2.5)
   --cwd <path>                    Working directory (default: .)
-  --backend <cc|pi|sdk>           LLM backend (default: sdk)
+  --backend <sdk>                 LLM backend (default: sdk)
   --system-prompt-file <path>     Custom system prompt
   --max-turns <n>                 Max turns (default: 200)
   --verbose                       Log context manager decisions
@@ -75,7 +75,7 @@ sapling doctor                  Run environment health checks
 
 ### The Problem
 
-Existing coding agents (Claude Code, Pi, Codex) treat context management as an afterthought. They run until ~90% of the context window is full, then panic-compact. By that point, the model has been reading through increasingly bloated context for dozens of turns, degrading quality and wasting tokens.
+Existing coding agents treat context management as an afterthought. They run until ~90% of the context window is full, then panic-compact. By that point, the model has been reading through increasingly bloated context for dozens of turns, degrading quality and wasting tokens.
 
 ### The Solution
 
@@ -114,10 +114,8 @@ sapling/
       typo.ts             Levenshtein-based command suggestions
       version.ts          Shared version utilities
     client/
-      cc.ts               Claude Code subprocess backend
-      pi.ts               Pi multi-provider subprocess backend
       anthropic.ts        Anthropic SDK backend (optional dep, dynamic import, ANTHROPIC_BASE_URL support)
-      index.ts            Client factory
+      index.ts            Client exports
     tools/
       bash.ts             Shell command execution
       read.ts             File reading with line numbers
@@ -155,15 +153,9 @@ sapling/
     scout.md              Scout persona — explores code, no edits
 ```
 
-### LLM Backends
+### LLM Backend
 
-| Backend | Billing | Method |
-|---------|---------|--------|
-| `sdk` (recommended) | Anthropic API per-token | `@anthropic-ai/sdk` direct calls |
-| `cc` (deprecated) | Claude Code subscription | `claude -p` subprocess |
-| `pi` (deprecated) | Provider-dependent | `pi` subprocess (JSONL events) |
-
-The SDK backend is the recommended default and auto-detects when running inside a Claude Code session. Model aliases (`sonnet`, `opus`, `haiku`) resolve to full model IDs automatically. The CC and Pi subprocess backends are deprecated and emit warnings on use. Use `sp auth set anthropic` to store your API key persistently.
+Sapling uses the Anthropic SDK (`@anthropic-ai/sdk`) for LLM calls. It supports `ANTHROPIC_BASE_URL` for compatible providers (e.g., MiniMax). Model aliases (`sonnet`, `opus`, `haiku`) resolve to full model IDs automatically. Use `sp auth set anthropic` to store your API key persistently.
 
 ## Part of os-eco
 
@@ -178,7 +170,7 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SAPLING_MODEL` | `MiniMax-M2.5` | Model to use |
-| `SAPLING_BACKEND` | `sdk` | LLM backend (`cc`, `pi`, or `sdk`) |
+| `SAPLING_BACKEND` | `sdk` | LLM backend |
 | `SAPLING_MAX_TURNS` | `200` | Maximum agent turns |
 | `SAPLING_CONTEXT_WINDOW` | `200000` | Context window size in tokens |
 | `ANTHROPIC_BASE_URL` | — | Custom API base URL for compatible providers |

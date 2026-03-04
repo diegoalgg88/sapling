@@ -8,12 +8,11 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { AnthropicClient, CcClient, PiClient } from "./client/index.ts";
+import { AnthropicClient } from "./client/index.ts";
 import { loadGuardConfig } from "./config.ts";
 import { ConfigError } from "./errors.ts";
 import { EventEmitter } from "./hooks/events.ts";
 import { HookManager } from "./hooks/manager.ts";
-import { logger } from "./logging/logger.ts";
 import { runLoop } from "./loop.ts";
 import { RpcServer } from "./rpc/server.ts";
 import { createDefaultRegistry } from "./tools/index.ts";
@@ -30,17 +29,11 @@ explore relevant code, make changes, verify results. When done, say what you acc
 // ─── Internal Factories ───────────────────────────────────────────────────────
 
 function createClient(config: SaplingConfig): LlmClient {
-	if (config.backend === "sdk") {
-		return new AnthropicClient({
-			model: config.model,
-			baseURL: config.apiBaseUrl,
-			apiKey: config.apiKey,
-		});
-	}
-	if (config.backend === "pi") {
-		return new PiClient({ model: config.model, cwd: config.cwd });
-	}
-	return new CcClient({ model: config.model, cwd: config.cwd });
+	return new AnthropicClient({
+		model: config.model,
+		baseURL: config.apiBaseUrl,
+		apiKey: config.apiKey,
+	});
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -94,17 +87,6 @@ export async function runCommand(
 			hookManager = new HookManager(guardConfig);
 			eventConfig = guardConfig.eventConfig;
 		}
-	}
-
-	// Emit deprecation warning for CC and Pi subprocess backends
-	if (config.backend === "cc") {
-		logger.warn(
-			"CC subprocess backend is deprecated and does not support tool calling. Use --backend sdk (default) instead. CC backend will be removed in v0.3.0.",
-		);
-	} else if (config.backend === "pi") {
-		logger.warn(
-			"Pi subprocess backend is deprecated and does not support tool calling. Use --backend sdk (default) instead. Pi backend will be removed in v0.3.0.",
-		);
 	}
 
 	const client = createClient(config);

@@ -26,21 +26,6 @@ async function checkConfig(): Promise<DoctorCheck> {
 	}
 }
 
-function checkBackendCc(): DoctorCheck {
-	const result = Bun.spawnSync(["which", "claude"], {
-		stdout: "pipe",
-		stderr: "pipe",
-	});
-	if (result.exitCode === 0) {
-		return { name: "backend-cc", status: "pass", message: "'claude' CLI is available on PATH" };
-	}
-	return {
-		name: "backend-cc",
-		status: "warn",
-		message: "'claude' CLI not found on PATH — cc backend unavailable",
-	};
-}
-
 async function checkAuth(): Promise<DoctorCheck> {
 	const envKey = process.env.ANTHROPIC_API_KEY;
 	if (envKey) {
@@ -119,12 +104,7 @@ export function registerDoctorCommand(program: Command): void {
 			const jsonMode = opts.json ?? false;
 			const verbose = opts.verbose ?? false;
 
-			const checks: DoctorCheck[] = [
-				await checkConfig(),
-				checkBackendCc(),
-				await checkAuth(),
-				checkVersion(),
-			];
+			const checks: DoctorCheck[] = [await checkConfig(), await checkAuth(), checkVersion()];
 
 			const hasFailures = checks.some((c) => c.status === "fail");
 

@@ -2,9 +2,9 @@
 // We mock the SDK module to test response mapping and error handling without API calls.
 
 import { describe, expect, it, mock } from "bun:test";
+import type { LlmRequest } from "../types.ts";
 import type { SdkClient, SdkResponse } from "./anthropic.ts";
 import { AnthropicClient } from "./anthropic.ts";
-import type { LlmRequest } from "./types.ts";
 
 const baseRequest: LlmRequest = {
 	systemPrompt: "You are a helpful assistant.",
