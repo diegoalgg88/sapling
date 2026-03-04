@@ -16,6 +16,8 @@ jobs:
         with:
           bun-version: latest
 
+      - run: sudo apt-get install -y ripgrep
+
       - run: bun install
       - run: bun run lint
       - run: bun run typecheck
