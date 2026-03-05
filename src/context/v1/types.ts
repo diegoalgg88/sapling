@@ -259,3 +259,42 @@ export const TOOL_OUTPUT_TRUNCATION: Readonly<{
 
 /** Operations with score below this threshold are eligible for compaction. */
 export const COMPACTION_SCORE_THRESHOLD = 0.3;
+
+// ---------------------------------------------------------------------------
+// Stage registry
+// ---------------------------------------------------------------------------
+
+/**
+ * Shared mutable context passed through every pipeline stage in a single
+ * process() cycle. Stages read from and write to this object to communicate
+ * intermediate results.
+ */
+export interface StageContext {
+	/** The full pipeline input for this cycle. */
+	input: PipelineInput;
+	/** Total context window size (from PipelineOptions). */
+	windowSize: number;
+	/** Whether to emit verbose debug logs to stderr. */
+	verbose: boolean;
+	/** Operation registry — mutated in place by ingest / compact / budget stages. */
+	operations: Operation[];
+	/** Currently active operation ID — updated by the ingest stage. */
+	activeOperationId: number | null;
+	/** Budget result — set by the budget stage, consumed by the render stage. */
+	budgetUtil: BudgetUtilization | null;
+	/** Final pipeline output — set by the render stage. */
+	output: PipelineOutput | null;
+}
+
+/**
+ * A single composable stage in the context pipeline.
+ *
+ * Stages are registered in order and called sequentially by StageRegistry.run().
+ * Each stage reads from and writes to the shared StageContext.
+ */
+export interface PipelineStage {
+	/** Unique name for this stage (e.g. "ingest", "evaluate", "compact"). */
+	readonly name: string;
+	/** Execute this stage, mutating ctx as needed. */
+	execute(ctx: StageContext): void;
+}

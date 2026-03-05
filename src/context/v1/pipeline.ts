@@ -1,24 +1,27 @@
 /**
  * Context Pipeline v1 — Orchestrating class
  *
- * SaplingPipelineV1 wires together the five pipeline stages:
+ * SaplingPipelineV1 wires together the five pipeline stages via a StageRegistry:
  *   ingest → evaluate → compact → budget → render
  *
  * Each call to process() runs one full pipeline cycle and returns the curated
  * message array + updated system prompt for the next LLM call.
  *
  * The pipeline maintains operation registry state across calls (stateful).
+ * Callers may supply a custom StageRegistry to extend or replace stages.
  *
  * See docs/context-pipeline-v1.md for the full design specification.
  */
 
 import type { Message } from "../../types.ts";
-import { budget, estimateTokens } from "./budget.ts";
-import { compact } from "./compact.ts";
-import { evaluate } from "./evaluate.ts";
-import { ingest } from "./ingest.ts";
-import { render } from "./render.ts";
-import type { Operation, PipelineInput, PipelineOutput, PipelineState } from "./types.ts";
+import { createDefaultStageRegistry, type StageRegistry } from "./registry.ts";
+import type {
+	Operation,
+	PipelineInput,
+	PipelineOutput,
+	PipelineState,
+	StageContext,
+} from "./types.ts";
 
 // ---------------------------------------------------------------------------
 // Public interface
@@ -29,6 +32,11 @@ export interface PipelineOptions {
 	windowSize: number;
 	/** Whether to log pipeline decisions (verbose mode). */
 	verbose?: boolean;
+	/**
+	 * Custom stage registry. Defaults to createDefaultStageRegistry().
+	 * Pass a custom registry to add, remove, or replace pipeline stages.
+	 */
+	registry?: StageRegistry;
 }
 
 /**
@@ -43,10 +51,12 @@ export class SaplingPipelineV1 {
 	private readonly windowSize: number;
 	private readonly verbose: boolean;
 	private lastState: PipelineState | null = null;
+	private readonly registry: StageRegistry;
 
 	constructor(options: PipelineOptions) {
 		this.windowSize = options.windowSize;
 		this.verbose = options.verbose ?? false;
+		this.registry = options.registry ?? createDefaultStageRegistry();
 	}
 
 	/**
@@ -59,86 +69,38 @@ export class SaplingPipelineV1 {
 	 * @returns PipelineOutput with managed messages, updated system prompt, and state.
 	 */
 	process(input: PipelineInput): PipelineOutput {
-		const { messages, systemPrompt } = input;
+		const { messages } = input;
 
 		// Guard: need at least a task message
 		if (messages.length === 0) {
 			throw new Error("Pipeline.process: messages array must not be empty");
 		}
 
-		// ── Stage 1: Ingest ────────────────────────────────────────────────────
-		// Extract turns from messages and assign them to operations.
-		const ingestResult = ingest(messages, this.operations, this.activeOperationId);
-		this.operations = ingestResult.operations;
-		this.activeOperationId = ingestResult.activeOperationId;
+		// Build shared context and run all registered stages
+		const ctx: StageContext = {
+			input,
+			windowSize: this.windowSize,
+			verbose: this.verbose,
+			operations: this.operations,
+			activeOperationId: this.activeOperationId,
+			budgetUtil: null,
+			output: null,
+		};
 
-		if (this.verbose) {
-			const activeOp = this.operations.find((op) => op.id === this.activeOperationId);
-			console.error(
-				`[pipeline-v1] ingest: ${this.operations.length} ops, active=${this.activeOperationId}, ` +
-					`turns=${activeOp?.turns.length ?? 0}`,
+		this.registry.run(ctx);
+
+		// Sync mutable state back from context
+		this.operations = ctx.operations;
+		this.activeOperationId = ctx.activeOperationId;
+
+		if (!ctx.output) {
+			throw new Error(
+				"Pipeline.process: no output produced — ensure the render stage is registered",
 			);
 		}
 
-		// ── Stage 2: Evaluate ──────────────────────────────────────────────────
-		// Score each operation for relevance to the current work.
-		evaluate(this.operations);
-
-		if (this.verbose) {
-			for (const op of this.operations) {
-				console.error(
-					`[pipeline-v1] evaluate: op#${op.id} (${op.type}) score=${op.score.toFixed(3)} status=${op.status}`,
-				);
-			}
-		}
-
-		// ── Stage 3: Compact ───────────────────────────────────────────────────
-		// Compact low-scoring completed operations into summaries.
-		compact(this.operations, this.activeOperationId);
-
-		if (this.verbose) {
-			const compacted = this.operations.filter((op) => op.status === "compacted").length;
-			console.error(`[pipeline-v1] compact: ${compacted} ops compacted`);
-		}
-
-		// ── Stage 4: Budget ────────────────────────────────────────────────────
-		// Move over-budget operations to "archived" status.
-		const systemTokens = estimateTokens(systemPrompt);
-		const budgetUtil = budget(this.operations, systemTokens, this.windowSize);
-
-		if (this.verbose) {
-			const archived = this.operations.filter((op) => op.status === "archived").length;
-			console.error(
-				`[pipeline-v1] budget: utilization=${(budgetUtil.utilization * 100).toFixed(1)}%, archived=${archived}`,
-			);
-		}
-
-		// ── Stage 5: Render ────────────────────────────────────────────────────
-		// Build the final message array and system prompt.
-		const taskMessage = messages[0] as Message;
-		const retainedOps = this.operations.filter((op) => op.status !== "archived");
-		const archivedOps = this.operations.filter((op) => op.status === "archived");
-
-		const output = render(
-			taskMessage,
-			retainedOps,
-			archivedOps,
-			systemPrompt,
-			this.operations,
-			this.activeOperationId,
-			budgetUtil,
-		);
-
-		this.lastState = output.state;
-
-		if (this.verbose) {
-			console.error(
-				`[pipeline-v1] render: ${output.messages.length} messages, ` +
-					`${archivedOps.length} archive entries`,
-			);
-		}
-
-		return output;
+		this.lastState = ctx.output.state;
+		return ctx.output;
 	}
 
 	/**
@@ -165,6 +127,14 @@ export class SaplingPipelineV1 {
 			contextUtilization: this.lastState.utilization,
 			archiveEntryCount: this.lastState.operationCounts.archived,
 		};
+	}
+
+	/**
+	 * Expose the stage registry so callers can inspect or modify stages
+	 * after construction (e.g. to add instrumentation or swap a stage).
+	 */
+	getRegistry(): StageRegistry {
+		return this.registry;
 	}
 }
 
