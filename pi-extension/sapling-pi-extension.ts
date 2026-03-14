@@ -252,30 +252,42 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "sapling_run",
 		label: "Run Sapling Task",
-		description: "Execute a coding task using Sapling headless agent with configurable model and backend",
+		description:
+			"Execute a coding task using Sapling headless agent with configurable model and backend. " +
+			"Supports providers: Anthropic (claude-sonnet-4-5), Nvidia (qwen3-coder-480b), MiniMax, Qwen. " +
+			"Use --backend sdk for provider-specific features, --backend openai for compatibility.",
 		parameters: {
 			type: "object",
 			properties: {
 				prompt: {
 					type: "string",
-					description: "Task description to execute",
+					description: "Task description to execute (required). Be specific about what you want.",
+					examples: [
+						"Fix the null pointer exception in UserService.java line 45",
+						"Add unit tests for the authentication module",
+						"Refactor the database connection pooling to use HikariCP",
+						"Implement rate limiting for the API endpoints",
+					],
 				},
 				model: {
 					type: "string",
-					description: "Model to use (e.g., qwen/qwen3-coder-480b, claude-sonnet-4-5, MiniMax-M2.5)",
+					description: "Model to use. Examples: qwen/qwen3-coder-480b (Nvidia), claude-sonnet-4-5 (Anthropic), minimax/minimax-m2.5",
+					examples: ["qwen/qwen3-coder-480b", "claude-sonnet-4-5", "minimax/minimax-m2.5"],
 				},
 				backend: {
 					type: "string",
-					description: "LLM backend (openai or sdk)",
+					description: "LLM backend. 'sdk' for provider-native features, 'openai' for compatibility",
 					enum: ["openai", "sdk"],
 				},
 				maxTurns: {
 					type: "number",
-					description: "Maximum number of turns (default: 200)",
+					description: "Maximum number of agent turns (default: 200, range: 1-500)",
+					minimum: 1,
+					maximum: 500,
 				},
 				verbose: {
 					type: "boolean",
-					description: "Enable verbose logging",
+					description: "Enable verbose logging for debugging",
 				},
 			},
 			required: ["prompt"],
@@ -313,6 +325,7 @@ export default function (pi: ExtensionAPI) {
 						task: params.prompt,
 						model: params.model || "default",
 						backend: params.backend || "default",
+						maxTurns: params.maxTurns || "default",
 					},
 				};
 			} catch (error: any) {
@@ -362,22 +375,30 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "sapling_auth_set",
 		label: "Configure Sapling API Key",
-		description: "Store API key for a provider (anthropic, minimax, nvidia, qwen)",
+		description:
+			"Store API key for a provider. Supported providers:\n" +
+			"- anthropic: Claude models (claude-sonnet-4-5)\n" +
+			"- nvidia: Nvidia NIM models (qwen3-coder-480b)\n" +
+			"- qwen: Qwen models via DashScope\n" +
+			"- minimax: MiniMax models (requires base-url)",
 		parameters: {
 			type: "object",
 			properties: {
 				provider: {
 					type: "string",
-					description: "Provider name (anthropic, minimax, nvidia, qwen)",
+					description: "Provider name",
 					enum: ["anthropic", "minimax", "nvidia", "qwen"],
+					examples: ["nvidia", "anthropic", "qwen"],
 				},
 				apiKey: {
 					type: "string",
-					description: "API key to store",
+					description: "API key to store (e.g., nvapi-xxx for Nvidia, sk-ant-xxx for Anthropic)",
+					examples: ["nvapi-xxx", "sk-ant-xxx", "sk-xxx"],
 				},
 				baseUrl: {
 					type: "string",
-					description: "Optional base URL override (required for minimax)",
+					description: "Optional base URL override. Required for minimax: https://api.minimax.io/anthropic",
+					examples: ["https://api.minimax.io/anthropic"],
 				},
 			},
 			required: ["provider", "apiKey"],
@@ -402,12 +423,14 @@ export default function (pi: ExtensionAPI) {
 					content: [
 						{
 							type: "text",
-							text: `✓ Stored API key for ${params.provider}`,
+							text: `✓ Stored API key for ${params.provider}\n` +
+								`Run /sapling auth status to verify configuration`,
 						},
 					],
 					details: {
 						provider: params.provider,
 						configured: true,
+						baseUrl: params.baseUrl || "default",
 					},
 				};
 			} catch (error: any) {
@@ -431,7 +454,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "sapling_auth_status",
 		label: "Show Sapling Auth Status",
-		description: "Show which providers are configured",
+		description: "Show which providers are configured with their API key status (set/unset)",
 		parameters: {} as any,
 		async execute(
 			_toolCallId: string,
@@ -443,7 +466,13 @@ export default function (pi: ExtensionAPI) {
 			try {
 				const output = await runSpCommand("sp auth status", ctx);
 				return {
-					content: [{ type: "text", text: output }],
+					content: [
+						{
+							type: "text",
+							text: output || "No providers configured yet.\n" +
+								"Use sapling_auth_set tool or run: /sapling auth set <provider> --key <key>",
+						},
+					],
 					details: {},
 				};
 			} catch (error: any) {
@@ -466,7 +495,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("sapling", {
 		description: "Sapling headless coding agent",
 		getArgumentCompletions: (prefix: string) => {
-			const subcommands = ["run", "init", "doctor", "config", "auth", "upgrade"];
+			const subcommands = ["run", "init", "doctor", "config", "auth", "upgrade", "version", "completions"];
 			const filtered = subcommands.filter((s: string) => s.startsWith(prefix));
 			return filtered.length > 0 ? filtered.map((s) => ({ value: s, label: s })) : null;
 		},
@@ -479,44 +508,91 @@ export default function (pi: ExtensionAPI) {
 
 				switch (subcommand) {
 					case "run":
-						ctx.ui?.notify?.("Usage: /sapling run <prompt> [--model <name>] [--backend openai|sdk]", "info");
+						// Show usage with examples
+						ctx.ui?.notify?.(
+							"Usage: /sapling run <prompt> [--model <name>] [--backend openai|sdk] [--max-turns N]\n\n" +
+							"Examples:\n" +
+							"  /sapling run 'Fix the null pointer exception in UserService'\n" +
+							"  /sapling run 'Add unit tests for auth module' --model qwen/qwen3-coder-480b\n" +
+							"  /sapling run 'Refactor database layer' --backend sdk --max-turns 50",
+							"info",
+						);
 						return;
 					case "init":
 						output = await runSpCommand("sp init", ctx);
-						break;
+						ctx.ui?.notify?.(output || "Sapling initialized successfully", "info");
+						return;
 					case "doctor":
 						output = await runSpCommand("sp doctor", ctx);
-						break;
+						ctx.ui?.notify?.(output || "Health checks completed", "info");
+						return;
 					case "config":
 						const configArgs = parts.slice(1).join(" ");
 						if (configArgs) {
+							// Handle config subcommands: get, set, list
+							if (configArgs.startsWith("set")) {
+								ctx.ui?.notify?.("Usage: Use sapling_auth_set tool or 'sp auth set <provider>'", "info");
+								return;
+							}
 							output = await runSpCommand(`sp config ${configArgs}`, ctx);
 						} else {
 							output = await runSpCommand("sp config", ctx);
 						}
-						break;
+						ctx.ui?.notify?.(output || "Configuration displayed", "info");
+						return;
 					case "auth":
 						const authArgs = parts.slice(1).join(" ");
 						if (authArgs) {
+							// Handle auth subcommands: set, status, remove
+							if (authArgs.startsWith("set")) {
+								const providerMatch = authArgs.match(/set\s+(\w+)/);
+								if (providerMatch) {
+									ctx.ui?.notify?.(
+										`To set ${providerMatch[1]} API key, use:\n` +
+										`  /sapling auth set ${providerMatch[1]} --key <your-key>\n` +
+										`Or use the sapling_auth_set tool`,
+										"info",
+									);
+									return;
+								}
+							}
 							output = await runSpCommand(`sp auth ${authArgs}`, ctx);
 						} else {
 							output = await runSpCommand("sp auth status", ctx);
 						}
-						break;
+						ctx.ui?.notify?.(output || "Auth status displayed", "info");
+						return;
 					case "upgrade":
+						ctx.ui?.notify?.("Checking for Sapling updates...", "info");
 						output = await runSpCommand("sp upgrade", ctx);
-						break;
+						ctx.ui?.notify?.(output || "Upgrade check completed", "info");
+						return;
+					case "version":
+						output = await runSpCommand("sp version", ctx);
+						ctx.ui?.notify?.(output || "Version displayed", "info");
+						return;
+					case "completions":
+						const shell = parts[1];
+						if (!shell) {
+							ctx.ui?.notify?.("Usage: /sapling completions <bash|zsh|fish>", "warning");
+							return;
+						}
+						output = await runSpCommand(`sp completions ${shell}`, ctx);
+						ctx.ui?.notify?.("Shell completions generated", "info");
+						return;
 					case "":
-						// Show version by default
+						// Show status by default
 						output = await runSpCommand("sp --version", ctx);
-						break;
+						ctx.ui?.notify?.(`Sapling version: ${output}`, "info");
+						return;
 					default:
 						ctx.ui?.notify?.(`Unknown subcommand: ${subcommand}`, "warning");
-						ctx.ui?.notify?.("Available: run, init, doctor, config, auth, upgrade", "info");
+						ctx.ui?.notify?.(
+							"Available: run, init, doctor, config, auth, upgrade, version, completions",
+							"info",
+						);
 						return;
 				}
-
-				ctx.ui?.notify?.(output || "Command executed", "info");
 			} catch (error: any) {
 				ctx.ui?.notify?.(`Sapling error: ${error.message}`, "error");
 			}
