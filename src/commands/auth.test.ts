@@ -166,6 +166,7 @@ describe("auth status", () => {
 		expect(names).toContain("minimax");
 		expect(names).toContain("nvidia");
 		expect(names).toContain("qwen");
+		expect(names).toContain("gemini");
 	}, 15000);
 
 	test("shows configured key masked from file", async () => {
@@ -269,6 +270,45 @@ describe("auth clear", () => {
 
 		const store = await readAuthStore();
 		expect(store.providers.qwen).toBeUndefined();
+	}, 15000);
+
+	test("stores gemini key", async () => {
+		await runCli([
+			"auth",
+			"set",
+			"gemini",
+			"--key",
+			"ya29.gemini-test-token",
+		]);
+
+		const store = await readAuthStore();
+		expect(store.providers.gemini?.apiKey).toBe("ya29.gemini-test-token");
+	}, 15000);
+
+	test("shows gemini key from env var", async () => {
+		const { stdout, exitCode } = await runCli(["auth", "status", "--json"], {
+			GEMINI_API_KEY: "ya29-fromenv",
+		});
+		expect(exitCode).toBe(0);
+		const data = JSON.parse(stdout) as {
+			providers: Array<{
+				provider: string;
+				source: string;
+				maskedKey?: string;
+			}>;
+		};
+		const gemini = data.providers.find((p: { provider: string }) => p.provider === "gemini");
+		expect(gemini?.source).toBe("env");
+		expect(gemini?.maskedKey).toContain("ya29");
+	}, 15000);
+
+	test("clears gemini provider", async () => {
+		await runCli(["auth", "set", "gemini", "--key", "ya29-gemini-test"]);
+		const { exitCode } = await runCli(["auth", "clear", "gemini"]);
+		expect(exitCode).toBe(0);
+
+		const store = await readAuthStore();
+		expect(store.providers.gemini).toBeUndefined();
 	}, 15000);
 });
 

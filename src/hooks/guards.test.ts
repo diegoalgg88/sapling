@@ -19,34 +19,35 @@ import {
 // ─── checkPathBoundary ────────────────────────────────────────────────────────
 
 describe("checkPathBoundary", () => {
-	const boundary = "/workspace/project";
+	const boundary = process.platform === "win32" ? "C:\\workspace\\project" : "/workspace/project";
 
 	it("allows file op inside boundary", () => {
-		const result = checkPathBoundary(
-			"read",
-			{ file_path: "/workspace/project/src/foo.ts" },
-			boundary,
-		);
+		const testPath =
+			process.platform === "win32"
+				? "C:\\workspace\\project\\src\\foo.ts"
+				: "/workspace/project/src/foo.ts";
+		const result = checkPathBoundary("read", { file_path: testPath }, boundary);
 		expect(result.allowed).toBe(true);
 	});
 
 	it("allows file op at the boundary root itself", () => {
-		const result = checkPathBoundary("write", { file_path: "/workspace/project" }, boundary);
+		const result = checkPathBoundary("write", { file_path: boundary }, boundary);
 		expect(result.allowed).toBe(true);
 	});
 
 	it("blocks file op outside boundary (absolute path)", () => {
-		const result = checkPathBoundary("write", { file_path: "/etc/passwd" }, boundary);
+		const testPath = process.platform === "win32" ? "C:\\etc\\passwd" : "/etc/passwd";
+		const result = checkPathBoundary("write", { file_path: testPath }, boundary);
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("/etc/passwd");
+		expect(result.reason).toContain(testPath);
 	});
 
 	it("blocks ../ traversal attacks", () => {
-		const result = checkPathBoundary(
-			"read",
-			{ file_path: "/workspace/project/../../../etc/passwd" },
-			boundary,
-		);
+		const testPath =
+			process.platform === "win32"
+				? "C:\\workspace\\project\\..\\..\\..\\etc\\passwd"
+				: "/workspace/project/../../../etc/passwd";
+		const result = checkPathBoundary("read", { file_path: testPath }, boundary);
 		expect(result.allowed).toBe(false);
 	});
 
@@ -56,12 +57,15 @@ describe("checkPathBoundary", () => {
 	});
 
 	it("handles input.path (grep/glob tools)", () => {
-		const result = checkPathBoundary("grep", { path: "/workspace/project/src" }, boundary);
+		const testPath =
+			process.platform === "win32" ? "C:\\workspace\\project\\src" : "/workspace/project/src";
+		const result = checkPathBoundary("grep", { path: testPath }, boundary);
 		expect(result.allowed).toBe(true);
 	});
 
 	it("blocks glob with input.path outside boundary", () => {
-		const result = checkPathBoundary("glob", { path: "/other/dir" }, boundary);
+		const testPath = process.platform === "win32" ? "C:\\other\\dir" : "/other/dir";
+		const result = checkPathBoundary("glob", { path: testPath }, boundary);
 		expect(result.allowed).toBe(false);
 	});
 
@@ -279,14 +283,15 @@ describe("evaluateGuards", () => {
 	});
 
 	it("short-circuits on pathBoundary before fileScope", () => {
+		const testPath = process.platform === "win32" ? "C:\\etc\\passwd" : "/etc/passwd";
 		const config: GuardConfig = {
 			rules: [],
-			pathBoundary: "/workspace",
-			fileScope: ["/other/file.ts"],
+			pathBoundary: process.platform === "win32" ? "C:\\workspace" : "/workspace",
+			fileScope: [process.platform === "win32" ? "C:\\other\\file.ts" : "/other/file.ts"],
 		};
-		const result = evaluateGuards("write", { file_path: "/etc/passwd" }, config);
+		const result = evaluateGuards("write", { file_path: testPath }, config);
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("/etc/passwd");
+		expect(result.reason).toContain(testPath);
 	});
 
 	it("returns allowed when all guards pass", () => {

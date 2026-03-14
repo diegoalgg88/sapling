@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { cleanupTempDir, createTempDir } from "../test-helpers.ts";
 import { runConfigGet, runConfigInit, runConfigList, runConfigSet } from "./config.ts";
 
-const CLI = new URL("../index.ts", import.meta.url).pathname;
+const CLI = join(import.meta.dir, "..", "index.ts");
 
 async function runCli(
 	args: string[],
@@ -93,10 +93,10 @@ describe("runConfigSet() + runConfigGet()", () => {
 		delete process.env.SAPLING_MODEL;
 		try {
 			runConfigGet("model", tmpDir);
-			expect(capturedStdout).toContain("MiniMax-M2.5");
+			expect(capturedStdout).toContain("qwen/qwen3-coder-480b-a35b-instruct");
 			expect(capturedStdout).toContain("default");
 		} finally {
-			if (origEnv !== undefined) process.env.SAPLING_MODEL = origEnv;
+			if (origEnv) process.env.SAPLING_MODEL = origEnv;
 		}
 	});
 
@@ -230,12 +230,16 @@ describe("runConfigInit()", () => {
 		expect(raw).toContain("max_turns:");
 	});
 
-	test("skips if config.yaml already exists", () => {
-		mkdirSync(join(tmpDir, ".sapling"), { recursive: true });
-		writeFileSync(join(tmpDir, ".sapling", "config.yaml"), "custom: true\n");
+	test("already initialized: skips re-initialization", () => {
+		// First initialization
 		runConfigInit(tmpDir);
-		const raw = readFileSync(join(tmpDir, ".sapling", "config.yaml"), "utf-8");
-		expect(raw).toBe("custom: true\n");
+		// Modify config to verify it's not overwritten
+		const configPath = join(tmpDir, ".sapling", "config.yaml");
+		writeFileSync(configPath, "custom: true\n");
+		// Attempt re-initialization
+		runConfigInit(tmpDir);
+		const config = readFileSync(configPath, "utf8");
+		expect(config).toBe("custom: true\n");
 		expect(capturedStdout).toContain("Already initialized");
 	});
 

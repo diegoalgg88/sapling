@@ -8,7 +8,7 @@
  *   blockedTools → readOnly → pathBoundary → fileScope → blockedBashPatterns
  */
 
-import { resolve } from "node:path";
+import { resolve, sep } from "node:path";
 import type { GuardConfig } from "../types.ts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -59,8 +59,16 @@ export function checkPathBoundary(
 	}
 	const resolvedTarget = resolve(rawPath);
 	const resolvedBoundary = resolve(pathBoundary);
+
+	// Normalize separators for cross-platform comparison
+	const normalizedTarget = resolvedTarget.replace(/\\/g, "/").toLowerCase();
+	const normalizedBoundary = resolvedBoundary.replace(/\\/g, "/").toLowerCase();
+
 	// Allow if path equals boundary or is inside it
-	if (resolvedTarget === resolvedBoundary || resolvedTarget.startsWith(`${resolvedBoundary}/`)) {
+	if (
+		normalizedTarget === normalizedBoundary ||
+		normalizedTarget.startsWith(`${normalizedBoundary}/`)
+	) {
 		return { allowed: true };
 	}
 	return {

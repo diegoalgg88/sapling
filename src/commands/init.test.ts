@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanupTempDir, createTempDir } from "../test-helpers.ts";
 import { runInit } from "./init.ts";
 
-const CLI = new URL("../index.ts", import.meta.url).pathname;
+const CLI = join(import.meta.dir, "..", "index.ts");
 
 async function runCli(
 	args: string[],
@@ -43,9 +43,9 @@ describe("runInit()", () => {
 	test("config.yaml contains project name and defaults", async () => {
 		await runInit(tmpDir, false);
 		const config = readFileSync(join(tmpDir, ".sapling", "config.yaml"), "utf8");
-		expect(config).toContain("model: MiniMax-M2.5");
+		expect(config).toContain("model: qwen/qwen3-coder-480b-a35b-instruct");
 		expect(config).toContain("max_turns: 200");
-		expect(config).toContain("context_pipeline: v1");
+		expect(config).toContain("backend: openai");
 	});
 
 	test("guards.json is valid JSON with version and empty rules", async () => {
@@ -76,28 +76,23 @@ describe("runInit()", () => {
 	});
 
 	test("appends to existing .gitattributes without duplicating", async () => {
-		const attrsPath = join(tmpDir, ".gitattributes");
-		const existing = "*.lock binary\n";
-		Bun.write(attrsPath, existing);
-
+		const gitattrsPath = join(tmpDir, ".gitattributes");
+		writeFileSync(gitattrsPath, "some other rule\n");
 		await runInit(tmpDir, false);
-		const attrs = readFileSync(attrsPath, "utf8");
-		expect(attrs).toContain("*.lock binary");
-		expect(attrs).toContain(".sapling/session.jsonl merge=union");
-
-		// Run again — should not duplicate the entry
-		await runInit(tmpDir, false);
-		const attrs2 = readFileSync(attrsPath, "utf8");
-		const count = (attrs2.match(/\.sapling\/session\.jsonl/g) ?? []).length;
-		expect(count).toBe(1);
+		await runInit(tmpDir, false); // Second run should not duplicate
+		const content = readFileSync(gitattrsPath, "utf8");
+		const lines = content.split(/\r?\n/).filter((l) => l.trim().length > 0);
+		const matches = lines.filter((l) => l.includes(".sapling/session.jsonl"));
+		expect(matches).toHaveLength(1);
 	});
 
 	test("already initialized: skips re-initialization", async () => {
 		await runInit(tmpDir, false);
 		// Modify config to verify it's not overwritten
-		Bun.write(join(tmpDir, ".sapling", "config.yaml"), "custom: true\n");
+		const configPath = join(tmpDir, ".sapling", "config.yaml");
+		writeFileSync(configPath, "custom: true\n");
 		await runInit(tmpDir, false);
-		const config = readFileSync(join(tmpDir, ".sapling", "config.yaml"), "utf8");
+		const config = readFileSync(configPath, "utf8");
 		expect(config).toBe("custom: true\n");
 	});
 

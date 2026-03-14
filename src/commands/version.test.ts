@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import { compareSemver, getCurrentVersion } from "./version.ts";
 
-const CLI = new URL("../index.ts", import.meta.url).pathname;
+const CLI = join(import.meta.dir, "..", "index.ts");
 
 async function runCli(
 	args: string[],

@@ -26,7 +26,7 @@ sp run "Add input validation to the login function in src/auth.ts"
 sp run "Fix the failing test in src/utils.test.ts" --backend sdk
 
 # Specify model and working directory
-sp run "Refactor the auth module" --model MiniMax-M2.5 --cwd /path/to/project
+sp run "Refactor the auth module" --model coder-model --cwd /path/to/project
 
 # Verbose mode (log context manager decisions)
 sp run "Implement the caching layer" --verbose
@@ -39,9 +39,9 @@ sp run "Add error handling" --json
 
 ```
 sapling run <prompt>            Execute a task
-  --model <name>                  Model to use (default: MiniMax-M2.5)
+  --model <name>                  Model to use (default: coder-model)
   --cwd <path>                    Working directory (default: .)
-  --backend <sdk>                 LLM backend (sdk only)
+  --backend <openai|sdk>          LLM backend (default: openai)
   --system-prompt-file <path>     Custom system prompt
   --max-turns <n>                 Max turns (default: 200)
   --verbose                       Log context manager decisions
@@ -54,7 +54,7 @@ sapling run <prompt>            Execute a task
   --rpc-socket <path>              Unix socket path for external getState queries
   --quiet, -q                     Suppress non-essential output
 
-sapling auth set <provider>     Store API key for a provider (anthropic, minimax)
+sapling auth set <provider>     Store API key for a provider (anthropic, minimax, nvidia, qwen)
   --base-url <url>                Custom API base URL for the provider
 sapling auth show               Show configured providers
 sapling auth remove <provider>  Remove stored credentials
@@ -160,7 +160,17 @@ sapling/
 
 ### LLM Backend
 
-Sapling uses the Anthropic SDK (`@anthropic-ai/sdk`) for LLM calls. It supports `ANTHROPIC_BASE_URL` for compatible providers (e.g., MiniMax). Model aliases (`sonnet`, `opus`, `haiku`) resolve to full model IDs automatically. Use `sp auth set anthropic` to store your API key persistently.
+Sapling supports multiple backends for LLM calls:
+
+*   **OpenAI (Default)**: Uses OpenAI-compatible APIs. Supports **Qwen** (Dashscope), **NVIDIA NIM** (Fallback), and **MiniMax**.
+*   **Anthropic SDK**: Uses the official `@anthropic-ai/sdk`.
+
+#### Providers & Base URLs
+*   **Qwen (Dashscope)**: `https://dashscope.aliyuncs.com/compatible-mode/v1` (Model: `coder-model`)
+*   **NVIDIA NIM (Fallback)**: `https://integrate.api.nvidia.com/v1` (Model: `qwen/qwen3-coder-480b-a35b-instruct` or any unknown)
+*   **MiniMax**: `https://api.minimax.io/anthropic`
+
+Use `sp auth set <provider>` to store your API key persistently.
 
 ## Part of os-eco
 
@@ -174,11 +184,16 @@ Sapling is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SAPLING_MODEL` | `MiniMax-M2.5` | Model to use |
-| `SAPLING_BACKEND` | `sdk` | LLM backend |
+| `SAPLING_MODEL` | `coder-model` | Model to use (Aliyun or NVIDIA) |
+| `SAPLING_BACKEND` | `openai` | LLM backend (`openai` or `sdk`) |
+| `SAPLING_API_KEY` | — | Canonical API key (overrides provider-specific) |
+| `SAPLING_BASE_URL` | — | Canonical Base URL (overrides provider-specific) |
+| `NVIDIA_API_KEY` | — | API key for NVIDIA NIM |
+| `NVIDIA_BASE_URL` | — | Base URL for NVIDIA NIM |
+| `ANTHROPIC_API_KEY` | — | API key for Anthropic |
+| `ANTHROPIC_BASE_URL` | — | Custom API base URL for Anthropic-compatible providers |
 | `SAPLING_MAX_TURNS` | `200` | Maximum agent turns |
 | `SAPLING_CONTEXT_WINDOW` | `200000` | Context window size in tokens |
-| `ANTHROPIC_BASE_URL` | — | Custom API base URL for compatible providers |
 | `ANTHROPIC_AUTH_TOKEN` | — | Fallback for `ANTHROPIC_API_KEY` |
 
 ## Development

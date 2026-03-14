@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as authModule from "./commands/auth.ts";
+import * as configModule from "./config.ts";
 import {
 	DEFAULT_CONFIG,
 	findProjectConfigDir,
@@ -20,7 +21,7 @@ describe("validateConfig", () => {
 	it("returns merged config with defaults", () => {
 		const config = validateConfig({});
 		expect(config.model).toBe(DEFAULT_CONFIG.model);
-		expect(config.backend).toBe("sdk");
+		expect(config.backend).toBe("openai");
 		expect(config.maxTurns).toBe(200);
 	});
 
@@ -65,9 +66,14 @@ describe("loadConfig", () => {
 		"SAPLING_BACKEND",
 		"SAPLING_MAX_TURNS",
 		"SAPLING_CONTEXT_WINDOW",
+		"SAPLING_BASE_URL",
+		"SAPLING_API_KEY",
+		"NVIDIA_BASE_URL",
+		"NVIDIA_API_KEY",
 		"ANTHROPIC_BASE_URL",
 		"ANTHROPIC_API_KEY",
 		"ANTHROPIC_AUTH_TOKEN",
+		"GEMINI_API_KEY",
 	] as const;
 	let savedEnv: Record<string, string | undefined>;
 
@@ -107,7 +113,7 @@ describe("loadConfig", () => {
 
 	it("uses default apiBaseUrl when ANTHROPIC_BASE_URL is not set", async () => {
 		const config = await loadConfig();
-		expect(config.apiBaseUrl).toBe("https://api.minimax.io/anthropic");
+		expect(config.apiBaseUrl).toBe(DEFAULT_CONFIG.apiBaseUrl);
 	});
 
 	it("reads ANTHROPIC_API_KEY into apiKey", async () => {
@@ -130,12 +136,14 @@ describe("loadConfig", () => {
 	});
 
 	it("leaves apiKey undefined when neither ANTHROPIC_API_KEY nor ANTHROPIC_AUTH_TOKEN is set", async () => {
-		const spy = spyOn(authModule, "readAuthStore").mockResolvedValue({ providers: {} });
+		const authSpy = spyOn(authModule, "readAuthStore").mockResolvedValue({ providers: {} });
+		const qwenSpy = spyOn(configModule, "loadQwenOAuthToken").mockResolvedValue(undefined);
 		try {
 			const config = await loadConfig();
 			expect(config.apiKey).toBeUndefined();
 		} finally {
-			spy.mockRestore();
+			authSpy.mockRestore();
+			qwenSpy.mockRestore();
 		}
 	});
 });
@@ -231,15 +239,15 @@ describe("loadConfig backend defaults", () => {
 		}
 	});
 
-	it("defaults to sdk backend", async () => {
+	it("defaults to openai backend", async () => {
 		const config = await loadConfig();
-		expect(config.backend).toBe("sdk");
+		expect(config.backend).toBe("openai");
 	});
 
 	it("ignores invalid SAPLING_BACKEND values", async () => {
 		process.env.SAPLING_BACKEND = "invalid";
 		const config = await loadConfig();
-		expect(config.backend).toBe("sdk");
+		expect(config.backend).toBe("openai");
 	});
 });
 
@@ -305,8 +313,30 @@ describe("resolveProvider", () => {
 		expect(resolveProvider("claude-opus-4-6")).toBe("anthropic");
 	});
 
-	it("defaults unknown models to anthropic provider", () => {
-		expect(resolveProvider("some-other-model")).toBe("anthropic");
+	it("defaults unknown models to nvidia provider", () => {
+		expect(resolveProvider("some-other-model")).toBe("nvidia");
+	});
+
+	it("maps coder-model to qwen provider", () => {
+		expect(resolveProvider("coder-model")).toBe("qwen");
+	});
+
+	it("maps qwen/ prefix models to nvidia provider", () => {
+		expect(resolveProvider("qwen/qwen3-coder-480b-a35b-instruct")).toBe("nvidia");
+	});
+
+	it("maps gemini- prefix models to gemini provider", () => {
+		expect(resolveProvider("gemini-2.0-flash")).toBe("gemini");
+		expect(resolveProvider("gemini-2.5-pro")).toBe("gemini");
+	});
+
+	it("maps gemini/ prefix models to gemini provider", () => {
+		expect(resolveProvider("gemini/gemini-2.0-flash")).toBe("gemini");
+	});
+
+	it("maps gemma- prefix models to gemini provider", () => {
+		expect(resolveProvider("gemma-3b")).toBe("gemini");
+		expect(resolveProvider("gemma-7b")).toBe("gemini");
 	});
 });
 
@@ -456,6 +486,10 @@ describe("loadConfig precedence", () => {
 		"SAPLING_BACKEND",
 		"SAPLING_MAX_TURNS",
 		"SAPLING_CONTEXT_WINDOW",
+		"SAPLING_BASE_URL",
+		"SAPLING_API_KEY",
+		"NVIDIA_BASE_URL",
+		"NVIDIA_API_KEY",
 		"ANTHROPIC_BASE_URL",
 		"ANTHROPIC_API_KEY",
 		"ANTHROPIC_AUTH_TOKEN",

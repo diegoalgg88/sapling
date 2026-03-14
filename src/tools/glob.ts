@@ -46,7 +46,7 @@ export class GlobTool implements Tool {
 		const matchedPaths: string[] = [];
 
 		for await (const file of glob.scan({ cwd: searchDir, absolute: false })) {
-			matchedPaths.push(file);
+			matchedPaths.push(file.replace(/\\/g, "/"));
 		}
 
 		if (matchedPaths.length === 0) {

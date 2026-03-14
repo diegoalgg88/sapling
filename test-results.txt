@@ -1,0 +1,1778 @@
+PS C:\Users\DiegoGzz\Documents\Programas\overstory\sapling> bun install --force
+bun install v1.3.10 (30e609e0)
+
+$ bun run scripts/install-pi-extension.ts
+
++ @biomejs/biome@2.4.5
++ @types/bun@1.3.9
++ typescript@5.9.3
++ @anthropic-ai/sdk@0.39.0
++ chalk@5.6.2
++ commander@14.0.3
+
+46 packages installed [3.18s]
+PS C:\Users\DiegoGzz\Documents\Programas\overstory\sapling> bun test
+bun test v1.3.10 (30e609e0)
+
+src\cli.test.ts:
+✓ runCommand cwd validation > throws ConfigError with code CONFIG_INVALID_CWD for nonexistent cwd
+✓ runCommand system-prompt-file error handling > throws ConfigError with code CONFIG_FILE_NOT_FOUND for missing system prompt file [15.00ms]
+
+src\config.test.ts:
+✓ validateConfig > returns merged config with defaults
+✓ validateConfig > applies overrides
+✓ validateConfig > throws ConfigError for maxTurns < 1
+✓ validateConfig > throws ConfigError for maxTurns NaN
+✓ validateConfig > throws ConfigError for maxTurns Infinity
+✓ validateConfig > throws ConfigError for invalid backend
+✓ validateConfig > throws ConfigError for contextWindow < 1000
+✓ validateConfig > throws ConfigError for contextWindow NaN
+✓ validateConfig > throws ConfigError for contextWindow Infinity
+✓ loadConfig > returns default config with no overrides
+✓ loadConfig > applies overrides
+✓ loadConfig > reads ANTHROPIC_BASE_URL into apiBaseUrl
+✓ loadConfig > uses default apiBaseUrl when ANTHROPIC_BASE_URL is not set
+✓ loadConfig > reads ANTHROPIC_API_KEY into apiKey
+✓ loadConfig > falls back to ANTHROPIC_AUTH_TOKEN when ANTHROPIC_API_KEY is not set
+✓ loadConfig > prefers ANTHROPIC_API_KEY over ANTHROPIC_AUTH_TOKEN when both are set
+✓ loadConfig > leaves apiKey undefined when neither ANTHROPIC_API_KEY nor ANTHROPIC_AUTH_TOKEN is set
+✓ loadGuardConfig > returns null when file does not exist (standalone mode)
+✓ loadGuardConfig > parses valid guard config [16.00ms]
+✓ loadGuardConfig > throws ConfigError for invalid JSON
+✓ loadGuardConfig > throws ConfigError when rules field is missing
+✓ loadGuardConfig > throws ConfigError when rules is not an array
+✓ loadGuardConfig > preserves eventConfig from guards file
+✓ loadGuardConfig > works without eventConfig (backwards compatible) [16.00ms]
+✓ loadConfig backend defaults > defaults to sdk backend
+✓ loadConfig backend defaults > ignores invalid SAPLING_BACKEND values
+✓ resolveModelAlias > resolves 'sonnet' alias via ANTHROPIC_DEFAULT_SONNET_MODEL
+✓ resolveModelAlias > resolves 'haiku' alias via ANTHROPIC_DEFAULT_HAIKU_MODEL
+✓ resolveModelAlias > leaves full model name unchanged when no matching env var
+✓ resolveModelAlias > returns original alias when no env var is set
+✓ resolveModelAlias > resolves alias in validateConfig via env var
+✓ resolveProvider > maps MiniMax models to minimax provider
+✓ resolveProvider > maps Anthropic models to anthropic provider
+✓ resolveProvider > defaults unknown models to anthropic provider
+✓ parseYamlConfig > parses model field
+✓ parseYamlConfig > parses max_turns as integer
+✓ parseYamlConfig > parses backend field
+✓ parseYamlConfig > parses context_window as integer
+✓ parseYamlConfig > parses api_base_url
+✓ parseYamlConfig > parses api_key
+✓ parseYamlConfig > strips double quotes from string values
+✓ parseYamlConfig > strips single quotes from string values
+✓ parseYamlConfig > ignores unknown keys silently
+✓ parseYamlConfig > ignores comment lines
+✓ parseYamlConfig > ignores empty lines
+✓ parseYamlConfig > ignores invalid backend values
+✓ parseYamlConfig > ignores non-numeric max_turns
+✓ parseYamlConfig > parses multiple fields together
+✓ findProjectConfigDir > finds .sapling/config.yaml in given directory
+✓ findProjectConfigDir > finds .sapling/config.yaml in parent directory
+✓ findProjectConfigDir > returns null when no .sapling/config.yaml is found
+✓ loadYamlConfigFile > returns empty object for missing file
+✓ loadYamlConfigFile > loads and parses a valid YAML config file
+✓ loadConfig precedence > project config overrides env vars
+✓ loadConfig precedence > CLI overrides project config
+✓ loadConfig precedence > env vars override defaults when no project config
+✓ loadConfig precedence > project config is found by walking up from cwd [15.00ms]
+
+src\errors.test.ts:
+✓ SaplingError > sets name, message, and code
+✓ SaplingError > accepts error cause via options
+✓ ClientError > extends SaplingError
+✓ ToolError > extends SaplingError
+✓ ContextError > extends SaplingError
+✓ ConfigError > extends SaplingError
+
+src\index.test.ts:
+✓ --prompt-file flag > exits with error when prompt file does not exist [125.00ms]
+✓ --prompt-file flag > fails with 'prompt must not be empty' when prompt file is empty [157.00ms]
+
+src\integration.test.ts:
+» integration tests (SDK backend, real API) > reads a file and reports its contents
+» integration tests (SDK backend, real API) > creates a file with specified content
+» integration tests (SDK backend, real API) > runs a bash command and includes output in response
+» integration tests (SDK backend, real API) > prints responseText to stdout when run via CLI
+2026-03-13T16:19:26.132Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:26.137Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ mock-client integration (real tools, scripted LLM) > dispatches real read tool and result appears in messages [15.00ms]
+2026-03-13T16:19:26.139Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:26.141Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ mock-client integration (real tools, scripted LLM) > dispatches real write tool and file appears on disk
+2026-03-13T16:19:26.143Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:26.148Z WRN Tool bash threw: Executable not found in $PATH: "bash"
+2026-03-13T16:19:26.148Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ mock-client integration (real tools, scripted LLM) > dispatches real bash tool with correct cwd
+2026-03-13T16:19:26.149Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:26.150Z WRN Unknown tool requested: nonexistent_tool
+2026-03-13T16:19:26.150Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ mock-client integration (real tools, scripted LLM) > handles unknown tool name with error tool_result and continues
+2026-03-13T16:19:26.151Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:26.156Z WRN Tool bash threw: Executable not found in $PATH: "bash"
+2026-03-13T16:19:26.156Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ mock-client integration (real tools, scripted LLM) > captures responseText from final assistant turn [16.00ms]
+2026-03-13T16:19:26.158Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:26.160Z INF Task complete after 3 turn(s) {"inputTokens":300,"outputTokens":150}
+✓ mock-client integration (real tools, scripted LLM) > executes multi-turn write-then-read tool sequence
+
+src\loop.test.ts:
+2026-03-13T16:19:26.166Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":[]}
+2026-03-13T16:19:26.166Z INF Task complete after 1 turn(s) {"inputTokens":100,"outputTokens":50}
+✓ runLoop > returns task_complete when LLM sends no tool calls
+2026-03-13T16:19:26.167Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":[]}
+2026-03-13T16:19:26.168Z INF Task complete after 1 turn(s) {"inputTokens":100,"outputTokens":50}
+✓ runLoop > returns responseText in the result when task completes with text
+2026-03-13T16:19:26.169Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:26.169Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > returns undefined responseText when LLM response has no text blocks
+2026-03-13T16:19:26.171Z INF Starting agent loop {"model":"mock-model","maxTurns":3,"tools":["echo"]}
+2026-03-13T16:19:26.171Z WRN Agent loop stopped: max turns (3) reached {"inputTokens":300,"outputTokens":150}
+✓ runLoop > returns max_turns when turn limit is reached
+2026-03-13T16:19:26.172Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:26.173Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > accumulates token counts across turns
+2026-03-13T16:19:26.174Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:26.174Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > executes a tool and returns result to LLM
+2026-03-13T16:19:26.175Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["error_tool"]}
+2026-03-13T16:19:26.175Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > handles tool errors without aborting the loop
+2026-03-13T16:19:26.176Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["throwing_tool"]}
+2026-03-13T16:19:26.176Z WRN Tool throwing_tool threw: Tool threw an exception
+2026-03-13T16:19:26.176Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > catches tool exceptions and returns error result to LLM
+2026-03-13T16:19:26.177Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":[]}
+2026-03-13T16:19:26.177Z WRN Unknown tool requested: nonexistent_tool
+2026-03-13T16:19:26.177Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > returns error result for unknown tool without aborting
+2026-03-13T16:19:26.178Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["slow","fast"]}
+2026-03-13T16:19:26.199Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > executes multiple tool calls from a single turn in parallel [32.00ms]
+2026-03-13T16:19:26.200Z INF Starting agent loop {"model":"mock-model","maxTurns":1,"tools":[]}
+2026-03-13T16:19:26.200Z WRN LLM call failed (attempt 1/3), retrying in 1000ms {"error":"API unavailable"}
+2026-03-13T16:19:27.206Z WRN LLM call failed (attempt 2/3), retrying in 2000ms {"error":"API unavailable"}
+2026-03-13T16:19:29.215Z ERR Agent loop aborted: API unavailable
+✓ runLoop > returns error exit when LLM call fails after retries [3015.00ms]
+2026-03-13T16:19:29.218Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":[]}
+2026-03-13T16:19:29.218Z ERR Agent loop aborted: Authentication failed
+✓ runLoop > aborts immediately on unrecoverable LLM errors
+2026-03-13T16:19:29.221Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.221Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > blocks tool call when hookManager.preToolCall returns false
+2026-03-13T16:19:29.223Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.223Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > allows tool call when hookManager.preToolCall returns true
+2026-03-13T16:19:29.225Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.225Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > calls hookManager.postToolCall after successful tool execution
+2026-03-13T16:19:29.226Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.227Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > does not call hookManager when no hookManager is provided
+2026-03-13T16:19:29.227Z INF Starting agent loop {"model":"claude-opus-4-6","maxTurns":10,"tools":[]}
+2026-03-13T16:19:29.228Z INF Task complete after 1 turn(s) {"inputTokens":100,"outputTokens":50}
+✓ runLoop > passes model and system prompt to LLM request
+2026-03-13T16:19:29.229Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":[]}
+2026-03-13T16:19:29.229Z INF Agent loop aborted by RPC request
+✓ runLoop > returns aborted when rpcServer.isAbortRequested() is true before first turn [16.00ms]
+2026-03-13T16:19:29.229Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.230Z INF Agent loop aborted by RPC request
+✓ runLoop > returns aborted after one tool turn when abort is set
+2026-03-13T16:19:29.231Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.231Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > injects steer request into tool results when dequeued
+2026-03-13T16:19:29.232Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.232Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > drains all queued RPC requests in a single turn
+2026-03-13T16:19:29.233Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.233Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > loop works normally without rpcServer
+2026-03-13T16:19:29.234Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.234Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ runLoop > injects followUp as a new standalone user message and loop completes
+2026-03-13T16:19:29.235Z INF Starting agent loop {"model":"mock-model","maxTurns":10,"tools":["echo"]}
+2026-03-13T16:19:29.235Z INF Task complete after 3 turn(s) {"inputTokens":300,"outputTokens":150}
+✓ runLoop > steer appends to tool results and loop completes normally
+
+src\overstory-e2e.test.ts:
+2026-03-13T16:19:29.239Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:29.241Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ overstory runtime E2E > emits correct NDJSON event sequence for a tool-using run
+2026-03-13T16:19:29.242Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:29.242Z INF Task complete after 1 turn(s) {"inputTokens":100,"outputTokens":50}
+✓ overstory runtime E2E > emits ready + turn_start + turn_end + result for text-only response
+✓ overstory runtime E2E > fires eventConfig.onSessionEnd on task_complete
+✓ overstory runtime E2E > fires eventConfig.onSessionEnd on error
+✓ overstory runtime E2E > fires eventConfig.onToolStart when tools are dispatched [16.00ms]
+2026-03-13T16:19:29.245Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:29.245Z INF Task complete after 1 turn(s) {"inputTokens":100,"outputTokens":50}
+✓ overstory runtime E2E > uses custom system prompt in LLM requests
+2026-03-13T16:19:29.254Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":[]}
+2026-03-13T16:19:29.255Z WRN Tool call blocked by guard: "write": Tool "write" is blocked in read-only mode {"input":{"file_path":"C:\\Users\\DiegoGzz\\AppData\\Local\\Temp\\sapling-test-6XYx8i\\out.txt","content":"x"}}
+2026-03-13T16:19:29.255Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ overstory runtime E2E > enforces readOnly + pathBoundary guards (reviewer agent pattern)
+✓ overstory runtime E2E > responds to getState queries on RPC socket
+2026-03-13T16:19:29.261Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:29.261Z INF Agent loop aborted by RPC request
+✓ overstory runtime E2E > aborts loop when RPC abort is received before first turn [15.00ms]
+2026-03-13T16:19:29.263Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:29.264Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ overstory runtime E2E > calls setState callback at turn boundaries
+✓ overstory runtime E2E > abortSignal terminates loop gracefully with onSessionEnd
+2026-03-13T16:19:29.266Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","read","write","edit","grep","glob"]}
+2026-03-13T16:19:29.266Z INF Agent loop aborted by signal
+✓ overstory runtime E2E > abortSignal before first turn yields zero turns
+» overstory runtime E2E > subprocess with --json emits parseable NDJSON events
+
+src\session.test.ts:
+✓ summarizePrompt > returns input unchanged when <= 200 chars
+✓ summarizePrompt > truncates long prompts to 200 chars with '...' suffix
+✓ summarizePrompt > collapses newlines to spaces
+✓ summarizePrompt > collapses multiple consecutive newlines to a single space
+✓ summarizePrompt > trims leading and trailing whitespace
+✓ summarizePrompt > truncates after collapsing newlines
+✓ appendSessionRecord > writes a valid JSONL line to session file
+✓ appendSessionRecord > appends (not overwrites) on multiple calls
+✓ appendSessionRecord > silently no-ops when .sapling/ dir does not exist
+✓ appendSessionRecord > creates session.jsonl if .sapling/ dir exists but file doesn't [16.00ms]
+
+src\bench\harness.test.ts:
+✓ scenarios > ALL_SCENARIOS contains 14 scenarios
+✓ scenarios > each scenario has a unique id
+✓ scenarios > getScenario returns the correct scenario by id
+✓ scenarios > getScenario returns undefined for unknown id
+✓ scenarios > each scenario has a non-empty taskPrompt
+✓ scenarios > each scenario has at least one message
+✓ scenarios > SHORT_SCENARIO has ~10 assistant messages
+✓ scenarios > MEDIUM_SCENARIO has ~30 assistant messages
+✓ scenarios > LONG_SCENARIO has ~100 assistant messages
+✓ scenarios > all short scenarios have ~10 assistant messages
+✓ scenarios > all medium scenarios have ~30 assistant messages
+✓ scenarios > all long scenarios have ~100 assistant messages
+✓ scenarios > SHORT expected reduction min is 0
+✓ scenarios > LONG expected reduction min is >= 0.3
+✓ scenarios > all long scenarios have expectedReductionMin >= 0.3
+✓ scenarios > all messages have valid roles
+✓ runBenchmark result structure > returns a result with all required fields [15.00ms]
+✓ runBenchmark result structure > scenarioId and scenarioName match the input scenario
+✓ runBenchmark result structure > turns count is positive
+✓ runBenchmark result structure > baseline tokens are non-negative
+✓ runBenchmark result structure > reductionFraction is between 0 and 1
+✓ runBenchmark result structure > reductionPct equals reductionFraction * 100 (rounded)
+✓ runBenchmark result structure > expectedReductionMin matches the scenario [32.00ms]
+✓ runBenchmark result structure > v1 field is always populated
+✓ token reduction > v1 tokens <= baseline tokens for MEDIUM and LONG scenarios [31.00ms]
+✓ token reduction > LONG scenario achieves non-negative reduction [31.00ms]
+✓ token reduction > SHORT scenario reduction >= 0 (non-negative)
+✓ token reduction > SHORT scenario passes reduction (expectation is 0)
+✓ token reduction > baseline grows with conversation length [16.00ms]
+✓ context limits > v1 hits no context limit with 200K window for all scenarios [78.00ms]
+✓ context limits > context limit tracking works with a tiny window [31.00ms]
+✓ runAllBenchmarks > returns one result per scenario [63.00ms]
+✓ runAllBenchmarks > each result matches its scenario id [93.00ms]
+✓ runAllBenchmarks > returns empty array for empty input
+✓ formatResult > returns a non-empty string
+✓ formatResult > includes scenario name
+✓ formatResult > includes PASS for short scenario (reduction expectation is 0)
+✓ formatResult > includes reduction percentage
+✓ formatResult > includes context limit hits
+✓ formatResult > includes v1 metrics
+✓ per-turn metrics > v1 turns has one entry per assistant message [16.00ms]
+✓ per-turn metrics > each v1 turn has positive inputTokens
+✓ per-turn metrics > each v1 turn has a non-negative messageCount
+✓ per-turn metrics > baseline turn count matches v1 turn count
+✓ v1 pipeline metrics > v1 totalInputTokens is non-negative
+✓ v1 pipeline metrics > v1 peakUtilization is between 0 and 1
+✓ v1 pipeline metrics > v1 meanUtilization is between 0 and 1
+✓ v1 pipeline metrics > v1 peakUtilization >= meanUtilization
+✓ v1 pipeline metrics > v1 operationCount > 0 for non-trivial scenarios [16.00ms]
+✓ v1 pipeline metrics > v1 compactionRatio is between 0 and 1 [15.00ms]
+✓ v1 pipeline metrics > v1 archiveEntryCount equals archivedCount [32.00ms]
+✓ v1 pipeline metrics > v1 compactedCount + archivedCount <= operationCount [15.00ms]
+✓ v1 pipeline metrics > v1 reductionFraction is between 0 and 1 [16.00ms]
+✓ v1 pipeline metrics > v1 turns array has one entry per assistant message
+✓ v1 pipeline metrics > v1 context limit hits is non-negative
+✓ v1 pipeline metrics > v1 hits no context limit on 200K window for LONG scenario [16.00ms]
+✓ v1 pipeline metrics > v1 reductionPct matches reductionFraction * 100 (rounded)
+✓ v1 pipeline metrics > v1 runs without error on all scenarios [78.00ms]
+✓ v1 pipeline metrics > v1 produces valid utilization for all scenarios [78.00ms]
+✓ v1 pipeline metrics > v1 operation count is positive for non-trivial scenarios [16.00ms]
+
+src\client\anthropic.test.ts:
+✓ AnthropicClient > estimateTokens > estimates tokens for short text
+✓ AnthropicClient > estimateTokens > returns 0 for empty string
+✓ AnthropicClient > estimateTokens > returns 1 for 4-char string
+✓ AnthropicClient > id > returns anthropic-sdk
+✓ AnthropicClient > call > maps text block response to LlmResponse correctly
+✓ AnthropicClient > call > maps tool_use block response correctly
+✓ AnthropicClient > call > maps usage fields correctly
+✓ AnthropicClient > call > maps stop_reason to stopReason
+✓ AnthropicClient > call > throws ClientError SDK_NOT_INSTALLED when SDK unavailable
+✓ AnthropicClient > call > throws ClientError SDK_API_ERROR on API errors
+✓ AnthropicClient > dependency injection (_client) > uses injected _client instead of dynamic import
+✓ AnthropicClient > dependency injection (_client) > passes MiniMax-M2.5 as default model
+✓ AnthropicClient > dependency injection (_client) > classifies 401 as SDK_AUTH_FAILED
+✓ AnthropicClient > dependency injection (_client) > classifies 403 as SDK_PERMISSION_DENIED
+✓ AnthropicClient > dependency injection (_client) > classifies 404 as SDK_MODEL_NOT_FOUND
+✓ AnthropicClient > dependency injection (_client) > classifies 429 as SDK_RATE_LIMITED
+✓ AnthropicClient > dependency injection (_client) > classifies 529 as SDK_OVERLOADED
+✓ AnthropicClient > dependency injection (_client) > classifies plain Error as SDK_API_ERROR
+✓ AnthropicClient > dependency injection (_client) > classifies missing ANTHROPIC_API_KEY error as SDK_AUTH_FAILED
+✓ AnthropicClient > dependency injection (_client) > classifies 'api key' message as SDK_AUTH_FAILED when no status
+✓ AnthropicClient > dependency injection (_client) > classifies 'authentication' message as SDK_AUTH_FAILED when no status
+✓ AnthropicClient > baseURL passthrough > passes baseURL to the SDK constructor
+✓ AnthropicClient > baseURL passthrough > omits baseURL from constructor when not provided
+
+src\commands\auth.test.ts:
+57 |                    "set",
+58 |                    "anthropic",
+59 |                    "--key",
+60 |                    "sk-ant-test123",
+61 |            ]);
+62 |            expect(stderr).toBe("");
+                      ^
+error: expect(received).toBe(expected)
+
+- ""
++ "error: Module not found "/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts"
++ "
+
+- Expected  - 1
++ Received  + 2
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:62:18)
+✗ auth set > stores anthropic key and writes 0600 file [46.00ms]
+78 |                    "--key",
+79 |                    "sk-mm-test456",
+80 |                    "--base-url",
+81 |                    "https://api.minimax.io/anthropic",
+82 |            ]);
+83 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:83:20)
+✗ auth set > stores minimax key with base URL [63.00ms]
+88 |    }, 15000);
+89 |
+90 |    test("rejects unknown provider", async () => {
+91 |            const { exitCode, stderr } = await runCli(["auth", "set", "openai", "--key", "sk-x"]);
+92 |            expect(exitCode).toBe(1);
+93 |            expect(stderr).toContain("Unknown provider");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Unknown provider"
+Received: "error: Module not found \"/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts\"\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:93:18)
+✗ auth set > rejects unknown provider [47.00ms]
+94 |    }, 15000);
+95 |
+96 |    test("errors without --key", async () => {
+97 |            const { exitCode, stderr } = await runCli(["auth", "set", "anthropic"]);
+98 |            expect(exitCode).toBe(1);
+99 |            expect(stderr).toContain("--key");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "--key"
+Received: "error: Module not found \"/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts\"\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:99:18)
+✗ auth set > errors without --key [47.00ms]
+106 |                   "anthropic",
+107 |                   "--key",
+108 |                   "sk-ant-test123",
+109 |                   "--json",
+110 |           ]);
+111 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:111:20)
+✗ auth set > --json output on success [62.00ms]
+118 | describe("auth status", () => {
+119 |   test("shows not configured when no key set", async () => {
+120 |           const { stdout, exitCode } = await runCli(["auth", "status"], {
+121 |                   ANTHROPIC_API_KEY: "",
+122 |           });
+123 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:123:20)
+✗ auth status > shows not configured when no key set [47.00ms]
+126 |
+127 |   test("--json returns structured output", async () => {
+128 |           const { stdout, exitCode } = await runCli(["auth", "status", "--json"], {
+129 |                   ANTHROPIC_API_KEY: "",
+130 |           });
+131 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:131:20)
+✗ auth status > --json returns structured output [47.00ms]
+141 |   test("shows configured key masked from file", async () => {
+142 |           await runCli(["auth", "set", "anthropic", "--key", "sk-ant-abcdefghij"]);
+143 |           const { stdout } = await runCli(["auth", "status", "--json"], {
+144 |                   ANTHROPIC_API_KEY: "",
+145 |           });
+146 |           const data = JSON.parse(stdout) as {
+                          ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:146:21)
+✗ auth status > shows configured key masked from file [94.00ms]
+160 |   test("env var takes precedence over file", async () => {
+161 |           await runCli(["auth", "set", "anthropic", "--key", "sk-ant-fromfile"]);
+162 |           const { stdout } = await runCli(["auth", "status", "--json"], {
+163 |                   ANTHROPIC_API_KEY: "sk-ant-fromenv",
+164 |           });
+165 |           const data = JSON.parse(stdout) as { providers: Array<{ provider: string; source: string }> };
+                          ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:165:21)
+✗ auth status > env var takes precedence over file [109.00ms]
+170 |
+171 | describe("auth clear", () => {
+172 |   test("clears specific provider", async () => {
+173 |           await runCli(["auth", "set", "anthropic", "--key", "sk-ant-test"]);
+174 |           const { exitCode } = await runCli(["auth", "clear", "anthropic"]);
+175 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:175:20)
+✗ auth clear > clears specific provider [109.00ms]
+180 |
+181 |   test("clears all when no provider given", async () => {
+182 |           await runCli(["auth", "set", "anthropic", "--key", "sk-ant-test"]);
+183 |           await runCli(["auth", "set", "minimax", "--key", "sk-mm-test"]);
+184 |           const { exitCode } = await runCli(["auth", "clear"]);
+185 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:185:20)
+✗ auth clear > clears all when no provider given [141.00ms]
+189 |   }, 15000);
+190 |
+191 |   test("--json output on clear", async () => {
+192 |           await runCli(["auth", "set", "anthropic", "--key", "sk-ant-test"]);
+193 |           const { stdout, exitCode } = await runCli(["auth", "clear", "anthropic", "--json"]);
+194 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:194:20)
+✗ auth clear > --json output on clear [109.00ms]
+198 |   }, 15000);
+199 |
+200 |   test("rejects unknown provider", async () => {
+201 |           const { exitCode, stderr } = await runCli(["auth", "clear", "openai"]);
+202 |           expect(exitCode).toBe(1);
+203 |           expect(stderr).toContain("Unknown provider");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Unknown provider"
+Received: "error: Module not found \"/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts\"\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:203:18)
+✗ auth clear > rejects unknown provider [47.00ms]
+205 | });
+206 |
+207 | describe("auth --help", () => {
+208 |   test("shows subcommands", async () => {
+209 |           const { stdout } = await runCli(["auth", "--help"]);
+210 |           expect(stdout).toContain("set");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "set"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\auth.test.ts:210:18)
+✗ auth --help > shows subcommands [63.00ms]
+
+src\commands\completions.test.ts:
+15 | }
+16 |
+17 | describe("completions command", () => {
+18 |    test("bash completion contains sp function", async () => {
+19 |            const { stdout, exitCode } = await runCompletions("bash");
+20 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\completions.test.ts:20:20)
+✗ completions command > bash completion contains sp function [62.00ms]
+22 |            expect(stdout).toContain("complete -F _sp_completions sp");
+23 |    });
+24 |
+25 |    test("zsh completion contains compdef sp", async () => {
+26 |            const { stdout, exitCode } = await runCompletions("zsh");
+27 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\completions.test.ts:27:20)
+✗ completions command > zsh completion contains compdef sp [47.00ms]
+29 |            expect(stdout).toContain("_sp()");
+30 |    });
+31 |
+32 |    test("fish completion contains complete -c sp", async () => {
+33 |            const { stdout, exitCode } = await runCompletions("fish");
+34 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\completions.test.ts:34:20)
+✗ completions command > fish completion contains complete -c sp [63.00ms]
+35 |            expect(stdout).toContain("complete -c sp -f");
+36 |    });
+37 |
+38 |    test("fish completion uses single __fish_seen_subcommand_from call for no-subcommand condition", async () => {
+39 |            const { stdout, exitCode } = await runCompletions("fish");
+40 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\completions.test.ts:40:20)
+✗ completions command > fish completion uses single __fish_seen_subcommand_from call for no-subcommand condition [47.00ms]
+45 |    });
+46 |
+47 |    test("unknown shell exits with error", async () => {
+48 |            const { stderr, exitCode } = await runCompletions("powershell");
+49 |            expect(exitCode).toBe(1);
+50 |            expect(stderr).toContain("Unknown shell: powershell");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Unknown shell: powershell"
+Received: "error: Module not found \"/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts\"\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\completions.test.ts:50:18)
+✗ completions command > unknown shell exits with error [62.00ms]
+
+src\commands\config.test.ts:
+100 |   if (dir && !existsSync(dir)) {
+101 |           mkdirSync(dir, { recursive: true });
+102 |   }
+103 |
+104 |   if (!existsSync(filePath)) {
+105 |           writeFileSync(filePath, `# Sapling configuration\n${yamlKey}: ${value}\n`);
+        ^
+error: ENOENT: no such file or directory, open 'C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-cFEEav\.sapling\config.yaml'
+      at writeYamlKey (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:105:3)
+      at runConfigSet (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:241:3)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:45:3)
+✗ runConfigSet() + runConfigGet() > set creates .sapling/config.yaml if not present
+100 |   if (dir && !existsSync(dir)) {
+101 |           mkdirSync(dir, { recursive: true });
+102 |   }
+103 |
+104 |   if (!existsSync(filePath)) {
+105 |           writeFileSync(filePath, `# Sapling configuration\n${yamlKey}: ${value}\n`);
+        ^
+error: ENOENT: no such file or directory, open 'C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-smykIN\.sapling\config.yaml'
+      at writeYamlKey (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:105:3)
+      at runConfigSet (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:241:3)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:50:3)
+✗ runConfigSet() + runConfigGet() > set writes yaml key to project config
+100 |   if (dir && !existsSync(dir)) {
+101 |           mkdirSync(dir, { recursive: true });
+102 |   }
+103 |
+104 |   if (!existsSync(filePath)) {
+105 |           writeFileSync(filePath, `# Sapling configuration\n${yamlKey}: ${value}\n`);
+        ^
+error: ENOENT: no such file or directory, open 'C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-Ir9pfb\.sapling\config.yaml'
+      at writeYamlKey (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:105:3)
+      at runConfigSet (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:241:3)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:56:3)
+✗ runConfigSet() + runConfigGet() > set accepts snake_case key alias
+100 |   if (dir && !existsSync(dir)) {
+101 |           mkdirSync(dir, { recursive: true });
+102 |   }
+103 |
+104 |   if (!existsSync(filePath)) {
+105 |           writeFileSync(filePath, `# Sapling configuration\n${yamlKey}: ${value}\n`);
+        ^
+error: ENOENT: no such file or directory, open 'C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-uIgcU4\.sapling\config.yaml'
+      at writeYamlKey (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:105:3)
+      at runConfigSet (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.ts:241:3)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:62:3)
+✗ runConfigSet() + runConfigGet() > set accepts camelCase key alias
+✓ runConfigSet() + runConfigGet() > set updates existing key in-place [16.00ms]
+Error: unknown config key "unknownKey". Supported: model, backend, maxTurns, contextWindow, baseUrl
+✓ runConfigSet() + runConfigGet() > set rejects unknown key
+✓ runConfigSet() + runConfigGet() > get returns project value with source=project
+✓ runConfigSet() + runConfigGet() > get returns default value with source=default when no config
+✓ runConfigSet() + runConfigGet() > get reports env source when env var is set
+✓ runConfigSet() + runConfigGet() > get returns project value over env (project has higher precedence)
+Error: unknown config key "unknownKey". Supported: model, backend, maxTurns, contextWindow, baseUrl
+✓ runConfigSet() + runConfigGet() > get rejects unknown key
+✓ runConfigSet() + runConfigGet() > get accepts snake_case alias [15.00ms]
+✓ runConfigSet() + runConfigGet() > get accepts camelCase alias
+✓ runConfigList() > lists all supported keys
+✓ runConfigList() > shows source labels for each key
+✓ runConfigList() > shows project source for keys from project config
+✓ runConfigInit() > creates .sapling/config.yaml with defaults [16.00ms]
+✓ runConfigInit() > skips if config.yaml already exists
+✓ runConfigInit() > creates .sapling/ directory if missing
+257 |           await cleanupTempDir(tmpDir);
+258 |   });
+259 |
+260 |   test("config --help shows subcommands", async () => {
+261 |           const { stdout } = await runCli(["config", "--help"]);
+262 |           expect(stdout).toContain("get");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "get"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:262:18)
+✗ config CLI command > config --help shows subcommands [47.00ms]
+265 |           expect(stdout).toContain("init");
+266 |   });
+267 |
+268 |   test("config get --help shows description", async () => {
+269 |           const { stdout } = await runCli(["config", "get", "--help"]);
+270 |           expect(stdout).toContain("key");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "key"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:270:18)
+✗ config CLI command > config get --help shows description [62.00ms]
+271 |   });
+272 |
+273 |   test("config set then get round-trips project value", async () => {
+274 |           await runCli(["config", "set", "model", "claude-haiku-4-5", "--cwd", tmpDir]);
+275 |           const { stdout } = await runCli(["config", "get", "model", "--cwd", tmpDir]);
+276 |           expect(stdout).toContain("claude-haiku-4-5");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "claude-haiku-4-5"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:276:18)
+✗ config CLI command > config set then get round-trips project value [110.00ms]
+277 |           expect(stdout).toContain("project");
+278 |   });
+279 |
+280 |   test("config list shows all keys", async () => {
+281 |           const { stdout } = await runCli(["config", "list", "--cwd", tmpDir]);
+282 |           expect(stdout).toContain("model");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "model"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:282:18)
+✗ config CLI command > config list shows all keys [47.00ms]
+285 |   });
+286 |
+287 |   test("config get unknown key exits with code 1", async () => {
+288 |           const { exitCode, stderr } = await runCli(["config", "get", "badKey", "--cwd", tmpDir]);
+289 |           expect(exitCode).toBe(1);
+290 |           expect(stderr).toContain("unknown config key");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "unknown config key"
+Received: "error: Module not found \"/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts\"\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:290:18)
+✗ config CLI command > config get unknown key exits with code 1 [46.00ms]
+291 |   });
+292 |
+293 |   test("config set unknown key exits with code 1", async () => {
+294 |           const { exitCode, stderr } = await runCli(["config", "set", "badKey", "val", "--cwd", tmpDir]);
+295 |           expect(exitCode).toBe(1);
+296 |           expect(stderr).toContain("unknown config key");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "unknown config key"
+Received: "error: Module not found \"/C:/Users/DiegoGzz/Documents/Programas/overstory/sapling/src/index.ts\"\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:296:18)
+✗ config CLI command > config set unknown key exits with code 1 [63.00ms]
+296 |           expect(stderr).toContain("unknown config key");
+297 |   });
+298 |
+299 |   test("config init creates config.yaml", async () => {
+300 |           const { stdout, exitCode } = await runCli(["config", "init", "--cwd", tmpDir]);
+301 |           expect(exitCode).toBe(0);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:301:20)
+✗ config CLI command > config init creates config.yaml [62.00ms]
+304 |   });
+305 |
+306 |   test("config set maxTurns with camelCase key", async () => {
+307 |           await runCli(["config", "set", "maxTurns", "100", "--cwd", tmpDir]);
+308 |           const { stdout } = await runCli(["config", "get", "maxTurns", "--cwd", tmpDir]);
+309 |           expect(stdout).toContain("100");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "100"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:309:18)
+✗ config CLI command > config set maxTurns with camelCase key [94.00ms]
+311 |
+312 |   test("config get returns env value with env source", async () => {
+313 |           const { stdout } = await runCli(["config", "get", "model", "--cwd", tmpDir], {
+314 |                   SAPLING_MODEL: "env-test-model",
+315 |           });
+316 |           expect(stdout).toContain("env-test-model");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "env-test-model"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\config.test.ts:316:18)
+✗ config CLI command > config get returns env value with env source [63.00ms]
+
+src\commands\doctor.test.ts:
+16 | }
+17 |
+18 | describe("doctor command", () => {
+19 |    test("doctor --json returns structured output", async () => {
+20 |            const { stdout } = await runCli(["doctor", "--json"]);
+21 |            const data = JSON.parse(stdout) as Record<string, unknown>;
+                         ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\doctor.test.ts:21:21)
+✗ doctor command > doctor --json returns structured output [62.00ms]
+29 |            expect(names).toContain("version");
+30 |    }, 15000);
+31 |
+32 |    test("doctor outputs human-readable results", async () => {
+33 |            const { stdout } = await runCli(["doctor", "--verbose"]);
+34 |            expect(stdout).toContain("Sapling Doctor");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Sapling Doctor"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\doctor.test.ts:34:18)
+✗ doctor command > doctor outputs human-readable results [47.00ms]
+34 |            expect(stdout).toContain("Sapling Doctor");
+35 |    }, 15000);
+36 |
+37 |    test("doctor --help shows description", async () => {
+38 |            const { stdout } = await runCli(["doctor", "--help"]);
+39 |            expect(stdout).toContain("doctor");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "doctor"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\doctor.test.ts:39:18)
+✗ doctor command > doctor --help shows description [63.00ms]
+
+src\commands\init.test.ts:
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-KHX8RR
+✓ runInit() > creates .sapling/ directory with expected files [15.00ms]
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-CLWvIM
+✓ runInit() > config.yaml contains project name and defaults
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-zNCLer
+✓ runInit() > guards.json is valid JSON with version and empty rules [16.00ms]
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-f6Wf4O
+✓ runInit() > session.jsonl is empty
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-3tzEkE
+✓ runInit() > .gitignore ignores lock files
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-uxlTOj
+✓ runInit() > creates .gitattributes with merge=union entry [15.00ms]
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-2tS5eC
+80 |            const existing = "*.lock binary\n";
+81 |            Bun.write(attrsPath, existing);
+82 |
+83 |            await runInit(tmpDir, false);
+84 |            const attrs = readFileSync(attrsPath, "utf8");
+85 |            expect(attrs).toContain("*.lock binary");
+                     ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "*.lock binary"
+Received: "\n.sapling/session.jsonl merge=union\n"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\init.test.ts:85:17)
+✗ runInit() > appends to existing .gitattributes without duplicating
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-jdLktb
+Already initialized: C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-jdLktb\.sapling
+ 96 |           await runInit(tmpDir, false);
+ 97 |           // Modify config to verify it's not overwritten
+ 98 |           Bun.write(join(tmpDir, ".sapling", "config.yaml"), "custom: true\n");
+ 99 |           await runInit(tmpDir, false);
+100 |           const config = readFileSync(join(tmpDir, ".sapling", "config.yaml"), "utf8");
+101 |           expect(config).toBe("custom: true\n");
+                       ^
+error: expect(received).toBe(expected)
+
+- "custom: true
+- "
++ ""
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\init.test.ts:101:18)
+✗ runInit() > already initialized: skips re-initialization [16.00ms]
+101 |           expect(config).toBe("custom: true\n");
+102 |   });
+103 |
+104 |   test("--json mode returns structured output on success", async () => {
+105 |           const { stdout } = await runCli(["init", "--cwd", tmpDir, "--json"]);
+106 |           const parsed = JSON.parse(stdout.trim()) as {
+                            ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\init.test.ts:106:23)
+✗ runInit() > --json mode returns structured output on success [47.00ms]
+✓ Initialized .sapling/ in C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-F8J5M1
+114 |   });
+115 |
+116 |   test("--json mode reports already-initialized", async () => {
+117 |           await runInit(tmpDir, false);
+118 |           const { stdout } = await runCli(["init", "--cwd", tmpDir, "--json"]);
+119 |           const parsed = JSON.parse(stdout.trim()) as { initialized: boolean };
+                            ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\init.test.ts:119:23)
+✗ runInit() > --json mode reports already-initialized [62.00ms]
+122 | });
+123 |
+124 | describe("init CLI command", () => {
+125 |   test("init --help shows description", async () => {
+126 |           const { stdout } = await runCli(["init", "--help"]);
+127 |           expect(stdout).toContain("init");
+                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "init"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\init.test.ts:127:18)
+✗ init CLI command > init --help shows description [63.00ms]
+
+src\commands\typo.test.ts:
+✓ suggestCommand > exact match returns itself
+✓ suggestCommand > one-character typo suggests correct command
+✓ suggestCommand > two-character typo suggests correct command
+✓ suggestCommand > completely different string returns undefined
+✓ suggestCommand > empty candidates returns undefined
+
+src\commands\upgrade.test.ts:
+✓ upgrade command > upgrade --check --json returns structured output [62.00ms]
+34 |            }
+35 |    }, 15000);
+36 |
+37 |    test("upgrade --help shows description", async () => {
+38 |            const { stdout } = await runCli(["upgrade", "--help"]);
+39 |            expect(stdout).toContain("upgrade");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "upgrade"
+Received: ""
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\upgrade.test.ts:39:18)
+✗ upgrade command > upgrade --help shows description [47.00ms]
+
+src\commands\version.test.ts:
+✓ getCurrentVersion > returns a semver string
+24 | });
+25 |
+26 | describe("version command --json", () => {
+27 |    test("outputs JSON envelope with success=true and command=version", async () => {
+28 |            const { stdout, exitCode } = await runCli(["version", "--json"]);
+29 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\version.test.ts:29:20)
+✗ version command --json > outputs JSON envelope with success=true and command=version [47.00ms]
+36 |            expect(typeof data.platform).toBe("string");
+37 |    });
+38 |
+39 |    test("--version --json outputs JSON envelope", async () => {
+40 |            const { stdout, exitCode } = await runCli(["--version", "--json"]);
+41 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\version.test.ts:41:20)
+✗ version command --json > --version --json outputs JSON envelope [62.00ms]
+45 |            expect(typeof data.version).toBe("string");
+46 |    });
+47 |
+48 |    test("version without --json outputs plain version string", async () => {
+49 |            const { stdout, exitCode } = await runCli(["version"]);
+50 |            expect(exitCode).toBe(0);
+                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\commands\version.test.ts:50:20)
+✗ version command --json > version without --json outputs plain version string [47.00ms]
+✓ compareSemver > equal versions return 0
+✓ compareSemver > a < b returns -1
+✓ compareSemver > a > b returns 1
+✓ compareSemver > handles missing patch segment
+
+src\hooks\e2e.test.ts:
+2026-03-13T16:19:32.655Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.655Z WRN Tool call blocked by guard: "bash": Tool "bash" is blocked {"input":{"command":"ls -la"}}
+2026-03-13T16:19:32.655Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > blocks a tool listed in blockedTools
+2026-03-13T16:19:32.666Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.667Z WRN Tool call blocked by guard: "write": Path "C:\tmp\sapling-guard-test-outside.txt" is outside the allowed boundary "C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-kjrMDT" {"input":{"file_path":"/tmp/sapling-guard-test-outside.txt","content":"evil"}}
+2026-03-13T16:19:32.667Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > blocks a write to a path outside pathBoundary [15.00ms]
+2026-03-13T16:19:32.677Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.677Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > allows a write inside pathBoundary
+2026-03-13T16:19:32.681Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.681Z WRN Tool call blocked by guard: "bash": Bash command matches blocked pattern "rm\s+-rf" {"input":{"command":"rm -rf /"}}
+2026-03-13T16:19:32.681Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > blocks a bash command matching blockedBashPatterns
+2026-03-13T16:19:32.684Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.684Z WRN Tool call blocked by guard: "write": Tool "write" is blocked in read-only mode {"input":{"file_path":"C:\\Users\\DiegoGzz\\AppData\\Local\\Temp\\sapling-test-R9jyMp\\out.txt","content":"hello"}}
+2026-03-13T16:19:32.684Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > blocks write tool in readOnly mode [16.00ms]
+2026-03-13T16:19:32.687Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.688Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > allows read tool in readOnly mode
+✓ guards.json end-to-end enforcement > loadGuardConfig returns null when file does not exist
+✓ guards.json end-to-end enforcement > loadGuardConfig parses guards.json with rules array
+2026-03-13T16:19:32.694Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.695Z WRN Tool call blocked by guard rule: "bash": no bash allowed {"input":{"command":"echo hi"}}
+2026-03-13T16:19:32.695Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > blocks tool via rules array loaded from guards.json
+2026-03-13T16:19:32.706Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.706Z WRN Tool call blocked by guard: "write": File "C:\Users\DiegoGzz\AppData\Local\Temp\sapling-test-WW7tNF\src\other.ts" is outside the allowed file scope {"input":{"file_path":"C:\\Users\\DiegoGzz\\AppData\\Local\\Temp\\sapling-test-WW7tNF\\src\\other.ts","content":"bad"}}
+2026-03-13T16:19:32.706Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > blocks write to file outside fileScope [16.00ms]
+2026-03-13T16:19:32.718Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.719Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > allows write to file inside fileScope [15.00ms]
+2026-03-13T16:19:32.731Z INF Starting agent loop {"model":"mock-model","maxTurns":5,"tools":["bash","write","read"]}
+2026-03-13T16:19:32.731Z INF Task complete after 2 turn(s) {"inputTokens":200,"outputTokens":100}
+✓ guards.json end-to-end enforcement > allows read of any file when fileScope is set [16.00ms]
+
+src\hooks\events.test.ts:
+✓ EventEmitter > when disabled > emit() is a no-op
+✓ EventEmitter > when disabled > all convenience methods are no-ops
+✓ EventEmitter > when disabled > enabled is false
+✓ EventEmitter > when enabled > enabled is true
+✓ EventEmitter > when enabled > emit() writes a newline-terminated JSON line to stdout
+✓ EventEmitter > when enabled > emit() adds a valid ISO timestamp field automatically
+✓ EventEmitter > when enabled > emit() always stamps with a fresh ISO timestamp
+✓ EventEmitter > when enabled > ready() emits correct shape
+✓ EventEmitter > when enabled > turnStart() emits correct shape
+✓ EventEmitter > when enabled > toolStart() emits correct shape
+✓ EventEmitter > when enabled > toolEnd() emits correct shape with success=true
+✓ EventEmitter > when enabled > toolEnd() emits success=false on error
+✓ EventEmitter > when enabled > toolEnd() includes filesModified when provided
+✓ EventEmitter > when enabled > toolEnd() includes empty filesModified array when provided
+✓ EventEmitter > when enabled > toolEnd() omits filesModified when not provided
+✓ EventEmitter > when enabled > toolEnd() includes errorMessage when provided
+✓ EventEmitter > when enabled > toolEnd() includes outputSummary when provided
+✓ EventEmitter > when enabled > toolEnd() omits errorMessage when not provided
+✓ EventEmitter > when enabled > toolEnd() omits outputSummary when not provided
+✓ EventEmitter > when enabled > turnEnd() emits correct shape with all token fields and model
+✓ EventEmitter > when enabled > result() emits correct shape for success outcome
+✓ EventEmitter > when enabled > result() emits correct shape for max_turns outcome
+✓ EventEmitter > when enabled > result() emits correct shape for error outcome
+✓ EventEmitter > when enabled > error() emits correct shape
+✓ EventEmitter > when enabled > progress() emits correct shape
+✓ EventEmitter > when enabled > progress() emits 0 percent at start
+✓ EventEmitter > when enabled > progress() emits 100 percent at completion
+✓ EventEmitter > when enabled > multiple emits produce separate newline-terminated lines
+
+src\hooks\guards.test.ts:
+✓ checkPathBoundary > allows file op inside boundary
+✓ checkPathBoundary > allows file op at the boundary root itself
+✓ checkPathBoundary > blocks file op outside boundary (absolute path)
+✓ checkPathBoundary > blocks ../ traversal attacks
+✓ checkPathBoundary > passes through non-file tools (bash)
+✓ checkPathBoundary > handles input.path (grep/glob tools)
+✓ checkPathBoundary > blocks glob with input.path outside boundary
+✓ checkPathBoundary > allows when no path in input
+✓ checkPathBoundary > resolves relative boundary paths
+✓ checkFileScope > allows write to file in scope
+✓ checkFileScope > allows edit to file in scope
+✓ checkFileScope > blocks write to file not in scope
+✓ checkFileScope > passes through read operations
+✓ checkFileScope > passes through glob
+✓ checkFileScope > passes through grep
+✓ checkFileScope > passes through bash
+✓ checkFileScope > allows when input has no file_path (edit without path)
+✓ checkReadOnly > blocks write when readOnly is true
+✓ checkReadOnly > blocks edit when readOnly is true
+✓ checkReadOnly > blocks bash when readOnly is true
+✓ checkReadOnly > allows read when readOnly is true
+✓ checkReadOnly > allows glob when readOnly is true
+✓ checkReadOnly > allows grep when readOnly is true
+✓ checkReadOnly > allows write when readOnly is false
+✓ checkReadOnly > allows bash when readOnly is false
+✓ checkBlockedBashPatterns > blocks bash command matching a literal pattern
+✓ checkBlockedBashPatterns > allows bash command not matching any pattern
+✓ checkBlockedBashPatterns > only applies to bash tool
+✓ checkBlockedBashPatterns > handles regex patterns with git push
+✓ checkBlockedBashPatterns > allows git pull when only git push is blocked
+✓ checkBlockedBashPatterns > blocks on first matching pattern
+✓ checkBlockedBashPatterns > allows when no command in input
+✓ checkBlockedTools > blocks tool in the list
+✓ checkBlockedTools > allows tool not in the list
+✓ checkBlockedTools > is case-sensitive
+✓ checkBlockedTools > allows any tool when list is empty
+✓ evaluateGuards > returns allowed when config has no flat guards
+✓ evaluateGuards > short-circuits on blockedTools before checking other guards
+✓ evaluateGuards > short-circuits on readOnly before pathBoundary
+✓ evaluateGuards > short-circuits on pathBoundary before fileScope
+✓ evaluateGuards > returns allowed when all guards pass
+✓ evaluateGuards > skips undefined config fields
+✓ evaluateGuards > evaluates fileScope after pathBoundary when both present
+
+src\hooks\manager.test.ts:
+✓ HookManager.preToolCall > allows all tools when rules are empty
+2026-03-13T16:19:32.749Z WRN Tool call blocked by guard rule: "bash" {"input":{}}
+✓ HookManager.preToolCall > blocks a specific tool matched by name
+2026-03-13T16:19:32.749Z WRN Tool call blocked by guard rule: "bash" {"input":{}}
+2026-03-13T16:19:32.749Z WRN Tool call blocked by guard rule: "read" {"input":{}}
+2026-03-13T16:19:32.749Z WRN Tool call blocked by guard rule: "write" {"input":{}}
+✓ HookManager.preToolCall > blocks all tools when rule has no tool field
+✓ HookManager.preToolCall > allows when action is allow
+2026-03-13T16:19:32.749Z WRN Tool call blocked by guard rule: "bash" {"input":{}}
+✓ HookManager.preToolCall > short-circuits on allow — subsequent block rule not evaluated
+2026-03-13T16:19:32.749Z WRN Guard warning for tool call: "bash": be careful {"input":{}}
+✓ HookManager.preToolCall > warn rule allows but does not block
+✓ HookManager.preToolCall > ignores post_tool_call rules during preToolCall
+2026-03-13T16:19:32.750Z WRN Tool call blocked by guard rule: "bash": first {"input":{}}
+✓ HookManager.preToolCall > evaluates rules in order — first block wins
+✓ HookManager.preToolCall > stores the guard config on the instance
+✓ HookManager.postToolCall > does not throw with empty rules
+2026-03-13T16:19:32.750Z WRN Guard post-call warning for tool: "bash": output is large {"resultLength":10}
+✓ HookManager.postToolCall > does not throw for warn rule
+✓ HookManager.postToolCall > does not act on pre_tool_call rules
+✓ HookManager.postToolCall > ignores block action post-call (no-op)
+2026-03-13T16:19:32.750Z WRN Guard post-call warning for tool: "write" {"resultLength":6}
+✓ HookManager.postToolCall > only processes rules matching the tool name
+
+src\rpc\channel.test.ts:
+✓ parseLine > parses a valid steer request
+✓ parseLine > parses a valid followUp request
+✓ parseLine > parses a valid abort request
+✓ parseLine > rejects invalid JSON
+✓ parseLine > rejects unknown method
+✓ parseLine > rejects steer without params
+✓ parseLine > rejects steer with non-string content
+✓ parseLine > rejects empty object
+✓ parseLine > rejects non-object JSON
+✓ parseLine > parses a valid getState request with numeric id
+✓ parseLine > parses a valid getState request with string id
+✓ parseLine > rejects getState without id
+✓ RpcChannel > queues steer requests in FIFO order
+✓ RpcChannel > queues followUp requests
+✓ RpcChannel > sets abortRequested on abort and does not queue it
+✓ RpcChannel > calls onParsed for each valid request
+✓ RpcChannel > calls onParsed with error for invalid JSON
+✓ RpcChannel > skips blank lines
+✓ RpcChannel > handles multiple requests in a single chunk (line-buffered)
+✓ RpcChannel > isAbortRequested starts false
+✓ RpcChannel > getState is not queued — dequeue returns undefined
+✓ RpcChannel > calls onParsed for getState request
+
+src\rpc\server.test.ts:
+✓ RpcServer > emits queued ack for steer request
+✓ RpcServer > emits queued ack for followUp request
+✓ RpcServer > emits accepted ack for abort request
+✓ RpcServer > emits rejected ack for invalid JSON
+✓ RpcServer > emits rejected ack with rawMethod for unknown method
+✓ RpcServer > dequeue returns queued steer request
+✓ RpcServer > dequeue returns undefined when queue is empty
+✓ RpcServer > isAbortRequested returns false initially
+✓ RpcServer > isAbortRequested returns true after abort [15.00ms]
+✓ RpcServer > abort is not enqueued — dequeue returns undefined
+✓ RpcServer.getState > responds with idle status by default
+✓ RpcServer.getState > responds with working status and tool name after setWorking
+✓ RpcServer.getState > responds with error status after setError
+✓ RpcServer.getState > clears currentTool when transitioning to idle from working
+✓ RpcServer.getState > responds with string id unchanged
+✓ RpcServer.getState > does not emit rpc_request_ack for getState
+✓ RpcServer.getState > getState is not queued — dequeue returns undefined
+✓ RpcServer.getState > handles multiple getState requests with different states [31.00ms]
+
+src\rpc\socket.test.ts:
+✓ RpcSocketServer > starts and accepts connections
+✓ RpcSocketServer > returns idle status by default [16.00ms]
+✓ RpcSocketServer > reflects updated state from RpcServer
+✓ RpcSocketServer > returns method-not-found for unknown methods
+✓ RpcSocketServer > returns parse error for invalid JSON
+✓ RpcSocketServer > removes socket file on stop
+✓ RpcSocketServer > handles stale socket file gracefully on start
+
+src\tools\bash.test.ts:
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:19:29)
+✗ BashTool > executes a simple command and returns stdout [16.00ms]
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:25:29)
+✗ BashTool > captures exit code 0 on success
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:31:29)
+✗ BashTool > marks isError true on non-zero exit
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:37:29)
+✗ BashTool > captures stderr
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:42:29)
+✗ BashTool > uses cwd as working directory
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:52:29)
+✗ BashTool > returns metadata with tokensEstimate [15.00ms]
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:58:29)
+✗ BashTool > truncates output beyond limit
+38 |                    };
+39 |            }
+40 |
+41 |            const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
+42 |
+43 |            const proc = Bun.spawn(["bash", "-c", command], {
+                        ^
+error: Executable not found in $PATH: "bash"
+  path: "bash",
+ errno: -4058,
+  code: "ENOENT"
+
+      at execute (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.ts:43:20)
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\bash.test.ts:67:29)
+✗ BashTool > does not deadlock on output exceeding pipe buffer (~64KB)
+✓ BashTool > throws on empty command
+✓ BashTool > toDefinition returns correct structure
+✓ BashTool > dry-run returns description without executing
+✓ BashTool > dry-run default is false [16.00ms]
+
+src\tools\edit.test.ts:
+✓ EditTool > replaces an exact match
+✓ EditTool > returns isError if old_string not found
+✓ EditTool > returns isError if old_string appears more than once
+✓ EditTool > returns isError for missing file
+✓ EditTool > reports line range in confirmation
+✓ EditTool > handles multiline old_string [16.00ms]
+✓ EditTool > resolves relative file_path against cwd
+✓ EditTool > toDefinition returns correct structure
+✓ EditTool > dry-run returns description without editing
+✓ EditTool > dry-run default is false
+
+src\tools\glob.test.ts:
+✓ GlobTool > matches files by pattern
+33 |
+34 |    it("matches recursively with **", async () => {
+35 |            const result = await tool.execute({ pattern: "**/*.ts" }, testDir);
+36 |            expect(result.isError).toBeFalsy();
+37 |            expect(result.content).toContain("a.ts");
+38 |            expect(result.content).toContain("sub/d.ts");
+                              ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "sub/d.ts"
+Received: "b.ts\nsub\\d.ts\na.ts"
+
+      at <anonymous> (C:\Users\DiegoGzz\Documents\Programas\overstory\sapling\src\tools\glob.test.ts:38:26)
+✗ GlobTool > matches recursively with ** [15.00ms]
+✓ GlobTool > returns 'No files matched' when no match
+✓ GlobTool > uses provided path instead of cwd
+✓ GlobTool > returns metadata with tokensEstimate
+✓ GlobTool > toDefinition returns correct structure
+✓ GlobTool > dry-run returns description without scanning
+✓ GlobTool > dry-run default is false [16.00ms]
+
+src\tools\grep.test.ts:
+✓ GrepTool > finds matches in files_with_matches mode (default) [15.00ms]
+✓ GrepTool > returns content in content mode [16.00ms]
+✓ GrepTool > returns counts in count mode [16.00ms]
+✓ GrepTool > returns 'No matches found' when no matches [15.00ms]
+✓ GrepTool > filters by glob pattern [16.00ms]
+✓ GrepTool > searches in a specific path [16.00ms]
+✓ GrepTool > toDefinition returns correct structure
+✓ GrepTool > handles large output without pipe deadlock [31.00ms]
+✓ GrepTool > dry-run returns description without searching
+✓ GrepTool > dry-run default is false
+
+src\tools\index.test.ts:
+✓ ToolRegistry > has() returns true for registered tools
+✓ ToolRegistry > get() returns the tool by name
+✓ ToolRegistry > list() returns all registered tools
+✓ ToolRegistry > toDefinitions() returns ToolDefinition for each tool
+✓ ToolRegistry > dispatch() calls the correct tool
+✓ ToolRegistry > dispatch() throws ToolError for unknown tool
+✓ ToolRegistry > createDefaultRegistry() includes all 6 tools
+
+src\tools\read.test.ts:
+✓ ReadTool > reads a file with line numbers
+✓ ReadTool > prefixes each line with its line number
+✓ ReadTool > supports offset and limit
+✓ ReadTool > returns isError for missing file
+✓ ReadTool > sets truncated flag when partial read
+✓ ReadTool > returns metadata filePath [16.00ms]
+✓ ReadTool > resolves relative file_path against cwd
+✓ ReadTool > toDefinition returns correct structure
+✓ ReadTool > dry-run returns description without reading
+✓ ReadTool > dry-run default is false
+
+src\tools\write.test.ts:
+✓ WriteTool > creates a new file with content
+✓ WriteTool > overwrites an existing file
+✓ WriteTool > creates parent directories if needed
+✓ WriteTool > returns byte count in confirmation
+✓ WriteTool > returns metadata filePath [16.00ms]
+✓ WriteTool > resolves relative file_path against cwd
+✓ WriteTool > throws on missing file_path
+✓ WriteTool > toDefinition returns correct structure
+✓ WriteTool > dry-run returns description without writing
+✓ WriteTool > dry-run default is false
+
+src\context\v1\budget.test.ts:
+✓ estimateTokens > returns 0 for empty string
+✓ estimateTokens > uses 4-chars-per-token heuristic
+✓ operationTokens > sums turn tokens for completed operations
+✓ operationTokens > uses summary tokens for compacted operations
+✓ operationTokens > sums turn tokens for compacted op with null summary
+✓ operationTokens > returns 0 for active op with no turns
+✓ enforceBudget > always retains active operation even if over budget
+✓ enforceBudget > retains completed ops that fit within budget
+✓ enforceBudget > archives completed ops that exceed budget
+✓ enforceBudget > sorts completed ops by score (highest first)
+✓ enforceBudget > returns correct BudgetUtilization shape
+✓ enforceBudget > handles no operations
+✓ enforceBudget > handles compacted operations using summary tokens
+✓ enforceArchiveBudget > retains all entries when under budget
+✓ enforceArchiveBudget > drops oldest entries first when over budget
+✓ enforceArchiveBudget > retains empty array when persona fills system budget
+✓ enforceArchiveBudget > preserves chronological order in retained entries
+✓ enforceArchiveBudget > handles empty entries array
+✓ budget (stage entry point) > marks over-budget operations as archived in-place
+✓ budget (stage entry point) > returns BudgetUtilization
+✓ budget (stage entry point) > does not archive active operations
+✓ budget (stage entry point) > does not modify already-archived operations
+✓ enforceBudget — per-operation cap > archives a completed op that individually exceeds the per-op cap
+✓ enforceBudget — per-operation cap > retains a completed op within the per-op cap
+✓ enforceBudget — per-operation cap > active operations are not subject to the per-op cap
+✓ rebalanceBudget > returns defaults when system prompt fills its budget
+✓ rebalanceBudget > flows system surplus to activeOperations up to its max
+✓ rebalanceBudget > flows remaining surplus to headroom after ops hits max
+✓ rebalanceBudget > never drops systemWithArchive below its min bound
+✓ rebalanceBudget > zone totals sum to approximately windowSize
+✓ rebalanceBudget > ops zone grows proportionally to system surplus
+✓ rebalanceBudget > does not exceed opsMax or headMax
+✓ rebalanceBudget > larger system prompt → less surplus → smaller ops budget
+✓ enforceBudget — rebalanced zone integration > retains more completed ops when system prompt is small
+
+src\context\v1\compact.test.ts:
+✓ extractPurpose > extracts purpose from 'I'll' pattern in first turn
+✓ extractPurpose > extracts purpose from 'Let me' pattern
+✓ extractPurpose > falls back to type + files when no regex matches
+✓ extractPurpose > falls back to type only when no files
+✓ extractPurpose > caps extracted purpose at 100 chars
+✓ buildActionSummary > builds deduplicated tool(file) list
+✓ buildActionSummary > deduplicates identical tool(file) pairs across turns
+✓ buildActionSummary > uses bare tool name when no files
+✓ buildActionSummary > returns empty string for op with no turns
+✓ describeOutcome > describes success with artifacts
+✓ describeOutcome > describes success without artifacts
+✓ describeOutcome > describes failure
+✓ describeOutcome > describes partial completion
+✓ describeOutcome > describes in_progress
+✓ renderCompactSummary > includes op id, purpose, actions, and outcome
+✓ renderCompactSummary > omits Actions line when there are no turns
+✓ renderArchiveEntry > produces a one-liner with op id, purpose, and outcome
+✓ truncateToolOutput > returns content unchanged when under bash budget
+✓ truncateToolOutput > truncates bash output over budget using head+tail strategy
+✓ truncateToolOutput > truncates grep output with simple char truncation
+✓ truncateToolOutput > truncates read output using head+tail strategy
+✓ truncateToolOutput > truncates glob output to max results
+✓ truncateToolOutput > returns unchanged content for unknown tools
+✓ compactOperation > sets status to compacted and generates a summary [15.00ms]
+✓ truncateOperationOutputs > truncates bash tool_result content when over budget
+✓ truncateOperationOutputs > does not truncate short content
+✓ truncateOperationOutputs > handles turns with null toolResults
+✓ compact > compacts operations with score below threshold
+✓ compact > keeps operations with score at or above threshold
+✓ compact > never compacts the active operation
+✓ compact > skips already-compacted operations
+✓ compact > skips archived operations
+✓ compact > processes multiple operations correctly
+✓ compact > threshold boundary: score exactly at threshold is kept
+✓ compact > threshold boundary: score just below threshold is compacted
+✓ compact > truncates active operation tool outputs without compacting
+✓ compact > uses failure-specific bash limit for failure-outcome operations
+✓ truncateOperationOutputs — token count update > re-estimates turn.meta.tokens to reflect truncated content size
+✓ truncateOperationOutputs — token count update > re-estimates turn.meta.tokens even when no truncation was applied
+
+src\context\v1\evaluate.test.ts:
+✓ recencyScore > returns 1.0 for 0 ops ago
+✓ recencyScore > returns 0.5 for exactly one half-life ago
+✓ recencyScore > returns 0.25 for two half-lives ago
+✓ recencyScore > decays monotonically
+✓ fileOverlapScore > returns 0 when either set is empty
+✓ fileOverlapScore > returns 1.0 for identical sets
+✓ fileOverlapScore > returns 0 for disjoint sets
+✓ fileOverlapScore > computes correct Jaccard for partial overlap
+✓ causalDependencyScore > returns 0 when no dependency
+✓ causalDependencyScore > returns 1.0 when active reads a file this op produced
+✓ causalDependencyScore > returns 1.0 when active explicitly depends on this op
+✓ causalDependencyScore > explicit dependsOn takes priority even with no artifact overlap
+✓ outcomeSignificanceScore > failure → 1.0
+✓ outcomeSignificanceScore > in_progress → 0.8
+✓ outcomeSignificanceScore > partial → 0.6
+✓ outcomeSignificanceScore > success → 0.3
+✓ outcomeSignificanceScore > adds 0.2 bonus for decision content
+✓ outcomeSignificanceScore > caps decision bonus at 1.0
+✓ operationTypeScore > mutate scores highest (1.0)
+✓ operationTypeScore > mixed (0.8) > investigate (0.7) > verify (0.6) > explore (0.3)
+✓ operationTypeScore > explore scores lowest (0.3)
+✓ evaluateOperation > returns score in [0, 1]
+✓ evaluateOperation > active operation scores higher than an older one
+✓ evaluateOperation > op with file overlap scores higher than disjoint op
+✓ evaluateOperation > causal dependency boosts score
+✓ evaluateOperation > applies all weights correctly for a known configuration
+✓ evaluateOperation > returns 0 when activeOp is null (no causal or file overlap contribution)
+✓ DEFAULT_SIGNALS > contains exactly 5 signals with the expected names
+✓ DEFAULT_SIGNALS > default signal weights match EVAL_WEIGHTS
+✓ evaluateOperation with custom signal registry > custom single-signal registry: score equals that signal's scoreFn result
+✓ evaluateOperation with custom signal registry > weights are auto-normalized: doubled weights produce same score
+✓ evaluateOperation with custom signal registry > signal that always returns 1.0 produces score 1.0
+✓ evaluateOperation with custom signal registry > signal that always returns 0.0 produces score 0.0
+✓ evaluateOperation with custom signal registry > two equal-weight signals average their scores
+✓ evaluateOperation with custom signal registry > higher-weight signal dominates score
+✓ evaluateOperation with custom signal registry > scoreFn receives correct opsAgo in context
+✓ evaluate > updates score in-place on all operations
+✓ evaluate > active operation gets a higher score than distant completed one
+✓ evaluate > handles empty operations array without error
+✓ evaluate > handles operations with no active op
+
+src\context\v1\ingest.test.ts:
+✓ extractTurns > pairs assistant+user messages into turns
+✓ extractTurns > handles final assistant turn with no tool results
+✓ extractTurns > skips leading user messages (e.g., task prompt)
+✓ extractTurns > returns empty array for empty message list
+✓ extractTurns > extracts file paths from tool_use inputs
+✓ extractTurns > detects errors from tool results
+✓ hasToolTransition > detects read -> write transition
+✓ hasToolTransition > detects write -> verify transition
+✓ hasToolTransition > returns false when phases overlap
+✓ hasToolTransition > returns false when prev tools are empty
+✓ hasToolTransition > returns false when current tools are empty
+✓ hasToolTransition > returns false for unknown tools
+✓ hasFileScopeChange > detects when turn files are completely different
+✓ hasFileScopeChange > returns false when there is file overlap
+✓ hasFileScopeChange > returns false when operation files are empty
+✓ hasFileScopeChange > returns false when turn files are empty
+✓ hasFileScopeChange > uses Jaccard < 0.2 threshold
+✓ hasIntentSignal > detects 'now let me'
+✓ hasIntentSignal > detects 'next, I'
+✓ hasIntentSignal > detects 'moving on to'
+✓ hasIntentSignal > detects 'that's done'
+✓ hasIntentSignal > returns false for regular text
+✓ hasIntentSignal > is case insensitive
+✓ hasTemporalGap > returns true when gap > 30s
+✓ hasTemporalGap > returns false when gap <= 30s
+✓ hasTemporalGap > returns false for same timestamp
+✓ hasSteerRedirect > returns false for null toolResults
+✓ hasSteerRedirect > returns false when no [STEER] prefix
+✓ hasSteerRedirect > returns false for [STEER] with non-redirect content
+✓ hasSteerRedirect > detects 'stop what you're doing'
+✓ hasSteerRedirect > detects 'instead do'
+✓ hasSteerRedirect > detects 'new priority'
+✓ hasSteerRedirect > detects 'never mind'
+✓ hasSteerRedirect > detects 'change of plans'
+✓ hasSteerRedirect > detects 'pivot to'
+✓ hasSteerRedirect > detects 'actually, do'
+✓ hasSteerRedirect > detects 'scratch that'
+✓ hasSteerRedirect > is case insensitive
+✓ hasSteerRedirect > returns false for non-array content
+✓ detectBoundary > returns false when no signals
+✓ detectBoundary > returns true when toolTypeTransition + fileScopeChange (0.35+0.30=0.65 >= 0.5)
+✓ detectBoundary > returns true when toolTypeTransition + intentSignal (0.35+0.20=0.55 >= 0.5)
+✓ detectBoundary > returns false when only intentSignal + temporalGap (0.20+0.15=0.35 < 0.5)
+✓ detectBoundary > returns true when all signals fire (1.0 >= 0.5)
+✓ detectBoundary > returns false when only toolTypeTransition (0.35 < 0.5)
+✓ detectBoundary > returns false when only fileScopeChange (0.30 < 0.5)
+✓ detectBoundary > returns true when fileScopeChange + intentSignal (0.30+0.20=0.50 >= 0.5)
+✓ detectBoundary > returns true when steerRedirect alone (override, no other signals) [16.00ms]
+✓ inferOperationType > returns 'explore' for read+search tools
+✓ inferOperationType > returns 'mutate' for write/edit tools
+✓ inferOperationType > returns 'verify' for bash only
+✓ inferOperationType > returns 'mixed' for write+bash
+✓ inferOperationType > returns 'explore' for empty tools
+✓ inferOutcome > returns 'partial' for empty operation
+✓ inferOutcome > returns 'failure' when last turn has error
+✓ inferOutcome > returns 'success' for read-only operation
+✓ inferOutcome > returns 'success' when write op ends with successful bash
+✓ inferOutcome > returns 'partial' when write op does not end with bash
+✓ computeDependsOn > returns empty array when no previous operations
+✓ computeDependsOn > returns empty when no artifact overlap and no failure
+✓ computeDependsOn > detects file-level artifact dependency
+✓ computeDependsOn > detects dependency on multiple previous ops via artifacts
+✓ computeDependsOn > detects investigate→fix chain when last completed op failed
+✓ computeDependsOn > does not duplicate when artifact overlap and failure coincide
+✓ computeDependsOn > skips active operations for error chain check
+✓ computeDependsOn > uses most recent completed op for error chain (not earlier ones)
+✓ ingestTurn > creates first operation when none exist
+✓ ingestTurn > adds turn to active operation when no boundary
+✓ ingestTurn > creates new operation when boundary detected
+✓ ingestTurn > finalizes operation with outcome on boundary
+✓ ingestTurn > populates dependsOn when new op reads files produced by a prior op
+✓ ingestTurn > populates dependsOn via investigate→fix chain when previous op failed
+✓ ingestTurn > creates new operation when steer redirect is detected (same files/tools)
+✓ ingest > processes a sequence of messages into operations
+✓ ingest > is idempotent when called twice with the same messages
+✓ ingest > handles incremental ingestion correctly
+✓ ingest > starts with empty operations when no messages
+✓ ingest > trackedTurnCount accounts for compacted operations (counts as 1)
+✓ ingest > trackedTurnCount accounts for archived operations (counts as 0)
+✓ ingest > new turns are not lost after compaction
+✓ resolveToolPhase > returns metadata phase when available
+✓ resolveToolPhase > falls back to TOOL_PHASES for built-in tools when no metadata map
+✓ resolveToolPhase > falls back to TOOL_PHASES when metadata map exists but tool has no entry
+✓ resolveToolPhase > falls back to TOOL_PHASES when metadata entry has no phase
+✓ resolveToolPhase > returns undefined for unknown tool with no metadata
+✓ resolveToolPhase > returns undefined for unknown tool even with empty metadata map
+✓ hasToolTransition — metadata-based phase lookup > detects transition using custom tool metadata phase
+✓ hasToolTransition — metadata-based phase lookup > no transition when custom tools share same phase
+✓ extractCommitments > extracts commitments from numbered lists with action verbs
+✓ extractCommitments > extracts commitments from future-tense phrases
+✓ extractCommitments > extracts commitments from bulleted action lists
+✓ extractCommitments > ignores list items without action verbs or file paths
+✓ extractCommitments > returns empty array for plain descriptive text
+✓ extractCommitments > deduplicates repeated commitments
+✓ extractCommitments > caps output at 20 items
+✓ computePendingCommitments > returns empty array when outcome is success
+✓ computePendingCommitments > returns commitments for files not in artifacts when outcome is partial
+✓ computePendingCommitments > includes non-file commitments from last turn
+✓ computePendingCommitments > does not include non-file commitments from non-last turns
+✓ computePendingCommitments > returns empty array when no commitments in any turn
+✓ computePendingCommitments > caps result at 10 items
+
+src\context\v1\pipeline.test.ts:
+✓ SaplingPipelineV1 > constructor > initializes with empty operation registry
+✓ SaplingPipelineV1 > process — basic single turn > returns task message as first message
+✓ SaplingPipelineV1 > process — basic single turn > preserves assistant and tool result messages
+✓ SaplingPipelineV1 > process — basic single turn > returns a system prompt string
+✓ SaplingPipelineV1 > process — basic single turn > returns pipeline state
+✓ SaplingPipelineV1 > process — basic single turn > creates one active operation after first turn
+✓ SaplingPipelineV1 > process — state persistence across calls > accumulates operations across multiple process() calls
+✓ SaplingPipelineV1 > process — state persistence across calls > getState() returns last pipeline state
+✓ SaplingPipelineV1 > process — state persistence across calls > getRpcState() returns compact state after process()
+✓ SaplingPipelineV1 > process — system prompt composition > includes base prompt in system prompt
+✓ SaplingPipelineV1 > process — system prompt composition > does not modify base prompt on first turn (no working memory yet)
+✓ SaplingPipelineV1 > process — throws on empty messages > throws when messages array is empty
+✓ SaplingPipelineV1 > process — budget enforcement > applies budget constraints based on window size
+✓ SaplingPipelineV1 > process — budget enforcement > archives operations that exceed budget
+✓ SaplingPipelineV1 > process — message ordering > task message is always first
+✓ SaplingPipelineV1 > process — message ordering > messages maintain alternating assistant/user roles
+✓ SaplingPipelineV1 > process — operation counts > operationCounts reflects current registry state
+✓ process — turns not dropped after compaction > does not drop new turns after compaction
+✓ extractTurnHint > extracts tool names from assistant message
+✓ extractTurnHint > extracts file paths from tool_use inputs
+✓ extractTurnHint > detects hasError from tool_result blocks
+✓ extractTurnHint > returns false hasError when no errors
+✓ extractTurnHint > handles empty messages gracefully
+
+src\context\v1\registry.test.ts:
+✓ StageRegistry > constructor > creates an empty registry when no stages provided
+✓ StageRegistry > constructor > accepts an initial list of stages
+✓ StageRegistry > constructor > initial list is a copy — external mutations do not affect registry
+✓ StageRegistry > register > appends a new stage
+✓ StageRegistry > register > replaces existing stage when name matches
+✓ StageRegistry > register > preserves order when appending multiple stages
+✓ StageRegistry > replace > replaces an existing stage by name
+✓ StageRegistry > replace > preserves stage order when replacing
+✓ StageRegistry > replace > throws when stage name not found
+✓ StageRegistry > remove > removes an existing stage and returns true
+✓ StageRegistry > remove > returns false when stage not found
+✓ StageRegistry > remove > registry is empty after removing only stage
+✓ StageRegistry > get > returns the stage when found
+✓ StageRegistry > get > returns undefined when not found
+✓ StageRegistry > has > returns true for registered stage
+✓ StageRegistry > has > returns false for missing stage
+✓ StageRegistry > list > returns a copy — external mutations do not affect the registry
+✓ StageRegistry > run > calls each stage in order with the shared context
+✓ StageRegistry > run > passes the same context object to all stages
+✓ StageRegistry > run > mutations by earlier stages are visible to later stages
+✓ StageRegistry > run > runs nothing when registry is empty
+✓ createDefaultStageRegistry > returns a registry with five stages in canonical order
+✓ createDefaultStageRegistry > each call returns an independent instance
+✓ createDefaultStageRegistry > stages can be replaced after creation
+✓ createDefaultStageRegistry > stages can be removed after creation
+
+src\context\v1\render.test.ts:
+✓ renderMessages > returns [taskMessage] when no retained ops
+✓ renderMessages > includes task message first
+✓ renderMessages > adds full turns from retained active op
+✓ renderMessages > adds full turns from retained completed op
+✓ renderMessages > renders compacted op as synthetic assistant+user pair
+✓ renderMessages > sorts chronologically when compacted op precedes full op turns
+✓ renderMessages > handles turn without toolResults (final incomplete turn)
+✓ renderMessages > sorts turns from multiple ops chronologically
+✓ composeSystemPrompt > returns basePrompt when no archives and no active context
+✓ composeSystemPrompt > does not include Working Memory section when archivedOps is empty
+✓ composeSystemPrompt > includes Working Memory section when archivedOps exist
+✓ composeSystemPrompt > orders Working Memory entries by id ascending
+✓ composeSystemPrompt > includes Active Context when activeOp exists
+✓ composeSystemPrompt > shows None for current operation when no activeOp but artifacts exist
+✓ composeSystemPrompt > lists artifact files in modified files section
+✓ composeSystemPrompt > deduplicates artifact files across operations
+✓ composeSystemPrompt > shows Unresolved errors for failure ops not subsequently fixed
+✓ composeSystemPrompt > shows None for errors when failure ops are subsequently resolved
+✓ composeSystemPrompt > does not include archived ops in files modified section
+✓ composeSystemPrompt > includes pending commitments from active op when present
+✓ composeSystemPrompt > does not include pending commitments section when active op has none
+✓ composeSystemPrompt > does not include pending commitments section when there is no active op
+✓ composeSystemPrompt > caps pending commitments display at 5 items
+✓ composeSystemPrompt > includes pending count in working memory archive entries
+✓ renderPipelineState > counts operations by status
+✓ renderPipelineState > sets utilization from budget
+✓ renderPipelineState > sets activeOperationId
+✓ renderPipelineState > includes all operations in state
+✓ renderPipelineState > handles empty operations list
+✓ sanitizeToolPairing > removes orphaned tool_result blocks with no matching tool_use
+✓ sanitizeToolPairing > removes orphaned tool_use blocks with no matching tool_result
+✓ sanitizeToolPairing > preserves valid tool_use/tool_result pairs unchanged
+✓ sanitizeToolPairing > handles string user content without modification
+✓ sanitizeToolPairing > does not remove tool_use blocks from final assistant without following user message
+✓ render > returns valid PipelineOutput with all fields
+✓ render > messages start with task message
+✓ render > systemPrompt starts with basePrompt
+✓ render > state reflects all operations including archived
+✓ render > includes working memory in system prompt when archived ops present
+✓ render > handles null activeOperationId gracefully
+
+src\context\v1\templates.test.ts:
+✓ renderCompactSummary — pending commitments > includes Pending section when pendingCommitments is non-empty
+✓ renderCompactSummary — pending commitments > does NOT include Pending section when pendingCommitments is empty array
+✓ renderCompactSummary — pending commitments > does NOT include Pending section when pendingCommitments is absent
+✓ renderCompactSummary — pending commitments > caps Pending list at 5 items
+✓ renderCompactSummary — pending commitments > Pending line appears after Outcome line
+✓ renderCompactSummary — pending commitments > separates multiple pending items with semicolons
+✓ renderArchiveEntry — pending commitments > appends (N pending) when pendingCommitments has items
+✓ renderArchiveEntry — pending commitments > shows correct count for single pending commitment
+✓ renderArchiveEntry — pending commitments > has no pending annotation when pendingCommitments is empty
+✓ renderArchiveEntry — pending commitments > has no pending annotation when pendingCommitments is absent
+✓ renderArchiveEntry — pending commitments > pending annotation appears after outcome bracket
+✓ renderArchiveEntry — pending commitments > entry remains a one-liner (no newlines)
+
+5 tests skipped:
+» integration tests (SDK backend, real API) > reads a file and reports its contents
+» integration tests (SDK backend, real API) > creates a file with specified content
+» integration tests (SDK backend, real API) > runs a bash command and includes output in response
+» integration tests (SDK backend, real API) > prints responseText to stdout when run via CLI
+» overstory runtime E2E > subprocess with --json emits parseable NDJSON events
+
+
+53 tests failed:
+✗ auth set > stores anthropic key and writes 0600 file [46.00ms]
+✗ auth set > stores minimax key with base URL [63.00ms]
+✗ auth set > rejects unknown provider [47.00ms]
+✗ auth set > errors without --key [47.00ms]
+✗ auth set > --json output on success [62.00ms]
+✗ auth status > shows not configured when no key set [47.00ms]
+✗ auth status > --json returns structured output [47.00ms]
+✗ auth status > shows configured key masked from file [94.00ms]
+✗ auth status > env var takes precedence over file [109.00ms]
+✗ auth clear > clears specific provider [109.00ms]
+✗ auth clear > clears all when no provider given [141.00ms]
+✗ auth clear > --json output on clear [109.00ms]
+✗ auth clear > rejects unknown provider [47.00ms]
+✗ auth --help > shows subcommands [63.00ms]
+✗ completions command > bash completion contains sp function [62.00ms]
+✗ completions command > zsh completion contains compdef sp [47.00ms]
+✗ completions command > fish completion contains complete -c sp [63.00ms]
+✗ completions command > fish completion uses single __fish_seen_subcommand_from call for no-subcommand condition [47.00ms]
+✗ completions command > unknown shell exits with error [62.00ms]
+✗ runConfigSet() + runConfigGet() > set creates .sapling/config.yaml if not present
+✗ runConfigSet() + runConfigGet() > set writes yaml key to project config
+✗ runConfigSet() + runConfigGet() > set accepts snake_case key alias
+✗ runConfigSet() + runConfigGet() > set accepts camelCase key alias
+✗ config CLI command > config --help shows subcommands [47.00ms]
+✗ config CLI command > config get --help shows description [62.00ms]
+✗ config CLI command > config set then get round-trips project value [110.00ms]
+✗ config CLI command > config list shows all keys [47.00ms]
+✗ config CLI command > config get unknown key exits with code 1 [46.00ms]
+✗ config CLI command > config set unknown key exits with code 1 [63.00ms]
+✗ config CLI command > config init creates config.yaml [62.00ms]
+✗ config CLI command > config set maxTurns with camelCase key [94.00ms]
+✗ config CLI command > config get returns env value with env source [63.00ms]
+✗ doctor command > doctor --json returns structured output [62.00ms]
+✗ doctor command > doctor outputs human-readable results [47.00ms]
+✗ doctor command > doctor --help shows description [63.00ms]
+✗ runInit() > appends to existing .gitattributes without duplicating
+✗ runInit() > already initialized: skips re-initialization [16.00ms]
+✗ runInit() > --json mode returns structured output on success [47.00ms]
+✗ runInit() > --json mode reports already-initialized [62.00ms]
+✗ init CLI command > init --help shows description [63.00ms]
+✗ upgrade command > upgrade --help shows description [47.00ms]
+✗ version command --json > outputs JSON envelope with success=true and command=version [47.00ms]
+✗ version command --json > --version --json outputs JSON envelope [62.00ms]
+✗ version command --json > version without --json outputs plain version string [47.00ms]
+✗ BashTool > executes a simple command and returns stdout [16.00ms]
+✗ BashTool > captures exit code 0 on success
+✗ BashTool > marks isError true on non-zero exit
+✗ BashTool > captures stderr
+✗ BashTool > uses cwd as working directory
+✗ BashTool > returns metadata with tokensEstimate [15.00ms]
+✗ BashTool > truncates output beyond limit
+✗ BashTool > does not deadlock on output exceeding pipe buffer (~64KB)
+✗ GlobTool > matches recursively with ** [15.00ms]
+
+ 750 pass
+ 5 skip
+ 53 fail
+ 2729 expect() calls
+Ran 808 tests across 40 files. [7.41s]

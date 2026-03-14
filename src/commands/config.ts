@@ -6,7 +6,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { Command } from "commander";
 import { DEFAULT_CONFIG, findProjectConfigDir, parseYamlConfig } from "../config.ts";
 import { colors } from "../logging/color.ts";
@@ -96,8 +96,8 @@ function readYamlConfig(filePath: string): Partial<SaplingConfig> {
 
 /** Write or update a single YAML key=value in a config file. Creates file if needed. */
 function writeYamlKey(filePath: string, yamlKey: string, value: string): void {
-	const dir = filePath.substring(0, filePath.lastIndexOf("/"));
-	if (dir && !existsSync(dir)) {
+	const dir = dirname(filePath);
+	if (!existsSync(dir)) {
 		mkdirSync(dir, { recursive: true });
 	}
 

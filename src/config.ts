@@ -14,33 +14,85 @@ const HOME_CONFIG_PATH = join(homedir(), ".sapling", "config.yaml");
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const QWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
+const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
+
 export const DEFAULT_CONFIG: SaplingConfig = {
-	model: "MiniMax-M2.5",
-	apiBaseUrl: "https://api.minimax.io/anthropic",
-	backend: "sdk",
+	model: "coder-model",
+	backend: "openai",
 	maxTurns: 200,
 	cwd: process.cwd(),
 	verbose: false,
 	quiet: false,
 	json: false,
-	contextWindow: DEFAULT_CONTEXT_WINDOW,
+	contextWindow: 200_000,
+	apiBaseUrl: QWEN_BASE_URL,
 };
 
-const VALID_BACKENDS: LlmBackend[] = ["sdk"];
+const VALID_BACKENDS: LlmBackend[] = ["sdk", "openai"];
 
 /** Known provider base URLs for Anthropic-compatible APIs. */
 const PROVIDER_BASE_URLS: Record<string, string> = {
 	minimax: "https://api.minimax.io/anthropic",
+	nvidia: NVIDIA_BASE_URL,
+	qwen: QWEN_BASE_URL,
+	gemini: GEMINI_BASE_URL,
 };
 
 /**
- * Resolve which auth provider to use based on the model name.
- * Models starting with "MiniMax" map to the "minimax" provider;
- * everything else maps to "anthropic".
+ * Resolve provider name from model ID.
  */
-export function resolveProvider(model: string): string {
+export function resolveProvider(model: string): string | undefined {
+	if (model === "coder-model" || model.startsWith("qwen-")) return "qwen";
+	if (model.startsWith("qwen/")) return "nvidia";
+	if (
+		model.startsWith("nvidia") ||
+		model.startsWith("moonshotai") ||
+		model.startsWith("mistralai") ||
+		model.startsWith("z-ai")
+	)
+		return "nvidia";
 	if (model.toLowerCase().startsWith("minimax")) return "minimax";
-	return "anthropic";
+	if (model.startsWith("claude-")) return "anthropic";
+	if (model.startsWith("gemini-") || model.startsWith("gemini/") || model.startsWith("gemma-")) return "gemini";
+	return "nvidia";
+}
+
+/**
+ * Load Qwen OAuth token from ~/.qwen/oauth_creds.json
+ */
+export async function loadQwenOAuthToken(): Promise<string | undefined> {
+	try {
+		const credsFile = join(homedir(), ".qwen", "oauth_creds.json");
+		if (existsSync(credsFile)) {
+			const content = await readFile(credsFile, "utf-8");
+			const creds = JSON.parse(content);
+			return creds.access_token;
+		}
+	} catch (err) {
+		// Silent fail
+	}
+	return undefined;
+}
+
+/**
+ * Load Gemini OAuth token from ~/.gemini/oauth_creds.json
+ */
+export async function loadGeminiOAuthToken(): Promise<string | undefined> {
+	try {
+		const credsFile = join(homedir(), ".gemini", "oauth_creds.json");
+		if (existsSync(credsFile)) {
+			const content = await readFile(credsFile, "utf-8");
+			const creds = JSON.parse(content);
+			return creds.access_token;
+		}
+	} catch (err) {
+		// Silent fail
+	}
+	return undefined;
 }
 
 /**
@@ -232,11 +284,16 @@ export async function loadConfig(overrides: Partial<SaplingConfig> = {}): Promis
 		if (!Number.isNaN(n)) fromEnv.contextWindow = n;
 	}
 
-	const envBaseUrl = process.env.ANTHROPIC_BASE_URL;
+	const envBaseUrl =
+		process.env.SAPLING_BASE_URL ?? process.env.NVIDIA_BASE_URL ?? process.env.ANTHROPIC_BASE_URL;
 	if (envBaseUrl) fromEnv.apiBaseUrl = envBaseUrl;
 
 	// ANTHROPIC_API_KEY is the canonical env var; ANTHROPIC_AUTH_TOKEN is a fallback alias.
-	const envApiKey = process.env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_AUTH_TOKEN;
+	const envApiKey =
+		process.env.SAPLING_API_KEY ??
+		process.env.NVIDIA_API_KEY ??
+		process.env.ANTHROPIC_API_KEY ??
+		process.env.ANTHROPIC_AUTH_TOKEN;
 	if (envApiKey) fromEnv.apiKey = envApiKey;
 
 	// Project-level config (.sapling/config.yaml) — overrides env vars
@@ -251,12 +308,24 @@ export async function loadConfig(overrides: Partial<SaplingConfig> = {}): Promis
 	if (!mergedForAuth.apiKey) {
 		const model = mergedForAuth.model ?? DEFAULT_CONFIG.model;
 		const provider = resolveProvider(model);
-		const store = await readAuthStore();
-		const creds = store.providers[provider];
-		if (creds) {
-			fromEnv.apiKey = creds.apiKey;
-			if (!mergedForAuth.apiBaseUrl) {
-				fromEnv.apiBaseUrl = creds.baseUrl ?? PROVIDER_BASE_URLS[provider];
+
+		if (provider === "qwen") {
+			const token = await loadQwenOAuthToken();
+			if (token) fromEnv.apiKey = token;
+		} else if (provider === "gemini") {
+			const token = await loadGeminiOAuthToken();
+			if (token) fromEnv.apiKey = token;
+		}
+
+		if (!fromEnv.apiKey && provider) {
+			const store = await readAuthStore();
+			const provStore = (store.providers || {}) as Record<string, any>;
+			const creds = provStore[provider];
+			if (creds) {
+				fromEnv.apiKey = creds.apiKey;
+				if (!mergedForAuth.apiBaseUrl) {
+					fromEnv.apiBaseUrl = creds.baseUrl ?? PROVIDER_BASE_URLS[provider];
+				}
 			}
 		}
 	}

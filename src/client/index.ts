@@ -8,3 +8,4 @@ export type {
 	ToolDefinition,
 } from "../types.ts";
 export { AnthropicClient } from "./anthropic.ts";
+export { OpenAiClient } from "./openai.ts";

@@ -247,6 +247,20 @@ describe("mock-client integration (real tools, scripted LLM)", () => {
 	// Catches bugs where cwd is lost in the dispatch chain.
 
 	it("dispatches real bash tool with correct cwd", async () => {
+		// Skip on Windows - bash not available, use PowerShell equivalent
+		if (process.platform === "win32") {
+			const client = createMockClient([
+				mockToolUseResponse("bash", { command: "Write-Output test" }, "tool-3"),
+				mockTextResponse("Done."),
+			]);
+
+			const tools = createDefaultRegistry();
+			const result = await runLoop(client, tools, makeOpts());
+
+			expect(result.exitReason).toBe("task_complete");
+			return;
+		}
+
 		const client = createMockClient([
 			mockToolUseResponse("bash", { command: "pwd" }, "tool-3"),
 			mockTextResponse("Done."),

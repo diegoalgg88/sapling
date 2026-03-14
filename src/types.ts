@@ -135,7 +135,7 @@ export interface SessionRecord {
 
 // ─── Config Types ─────────────────────────────────────────────────────────────
 
-export type LlmBackend = "sdk";
+export type LlmBackend = "sdk" | "openai";
 
 export interface SaplingConfig {
 	model: string;

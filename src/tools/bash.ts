@@ -40,7 +40,10 @@ export class BashTool implements Tool {
 
 		const timeoutMs = typeof input.timeout === "number" ? input.timeout : DEFAULT_TIMEOUT_MS;
 
-		const proc = Bun.spawn(["bash", "-c", command], {
+		const isWindows = process.platform === "win32";
+		const shell = isWindows ? ["cmd", "/c"] : ["bash", "-c"];
+
+		const proc = Bun.spawn([...shell, command], {
 			cwd,
 			stdout: "pipe",
 			stderr: "pipe",

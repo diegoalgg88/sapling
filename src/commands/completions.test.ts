@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 
 async function runCompletions(
 	shell: string,
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-	const CLI = new URL("../index.ts", import.meta.url).pathname;
+	const CLI = join(import.meta.dir, "..", "index.ts");
 	const proc = Bun.spawn(["bun", "run", CLI, "completions", shell], {
 		stdout: "pipe",
 		stderr: "pipe",

@@ -125,6 +125,9 @@ async function runSpCommand(cmd: string, ctx?: ExtensionContext): Promise<string
 		if (process.env.MINIMAX_API_KEY) {
 			env.MINIMAX_API_KEY = process.env.MINIMAX_API_KEY;
 		}
+		if (process.env.GEMINI_API_KEY) {
+			env.GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+		}
 
 		const result = await execAsync(fullCmd, {
 			timeout: 30000,
@@ -254,7 +257,7 @@ export default function (pi: ExtensionAPI) {
 		label: "Run Sapling Task",
 		description:
 			"Execute a coding task using Sapling headless agent with configurable model and backend. " +
-			"Supports providers: Anthropic (claude-sonnet-4-5), Nvidia (qwen3-coder-480b), MiniMax, Qwen. " +
+			"Supports providers: Anthropic (claude-sonnet-4-5), Nvidia (qwen3-coder-480b), MiniMax, Qwen, Gemini. " +
 			"Use --backend sdk for provider-specific features, --backend openai for compatibility.",
 		parameters: {
 			type: "object",
@@ -271,8 +274,8 @@ export default function (pi: ExtensionAPI) {
 				},
 				model: {
 					type: "string",
-					description: "Model to use. Examples: qwen/qwen3-coder-480b (Nvidia), claude-sonnet-4-5 (Anthropic), minimax/minimax-m2.5",
-					examples: ["qwen/qwen3-coder-480b", "claude-sonnet-4-5", "minimax/minimax-m2.5"],
+					description: "Model to use. Examples: qwen/qwen3-coder-480b (Nvidia), claude-sonnet-4-5 (Anthropic), minimax/minimax-m2.5, gemini-2.0-flash",
+					examples: ["qwen/qwen3-coder-480b", "claude-sonnet-4-5", "minimax/minimax-m2.5", "gemini-2.0-flash"],
 				},
 				backend: {
 					type: "string",
@@ -380,15 +383,16 @@ export default function (pi: ExtensionAPI) {
 			"- anthropic: Claude models (claude-sonnet-4-5)\n" +
 			"- nvidia: Nvidia NIM models (qwen3-coder-480b)\n" +
 			"- qwen: Qwen models via DashScope\n" +
-			"- minimax: MiniMax models (requires base-url)",
+			"- minimax: MiniMax models (requires base-url)\n" +
+			"- gemini: Google Gemini models (gemini-2.0-flash, gemma-3b)",
 		parameters: {
 			type: "object",
 			properties: {
 				provider: {
 					type: "string",
 					description: "Provider name",
-					enum: ["anthropic", "minimax", "nvidia", "qwen"],
-					examples: ["nvidia", "anthropic", "qwen"],
+					enum: ["anthropic", "minimax", "nvidia", "qwen", "gemini"],
+					examples: ["nvidia", "anthropic", "qwen", "gemini"],
 				},
 				apiKey: {
 					type: "string",

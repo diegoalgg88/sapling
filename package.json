@@ -25,7 +25,9 @@
 	"main": "src/index.ts",
 	"files": [
 		"src",
-		"agents"
+		"agents",
+		"scripts",
+		"pi-extension"
 	],
 	"publishConfig": {
 		"access": "public"
@@ -38,16 +40,22 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"typecheck": "tsc --noEmit",
-		"version:bump": "bun scripts/version-bump.ts"
+		"version:bump": "bun scripts/version-bump.ts",
+		"install-pi-extension": "bun run scripts/install-pi-extension.ts",
+		"postinstall": "bun run scripts/install-pi-extension.ts"
 	},
 	"dependencies": {
 		"chalk": "^5.6.2",
-		"commander": "^14.0.3"
+		"commander": "^14.0.3",
+		"openai": "^4.86.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.5",
 		"@types/bun": "latest",
-		"typescript": "^5.9.0"
+		"typescript": "^5.9.0",
+		"bun-types": "latest",
+		"@types/node": "^20.11.24",
+		"@mariozechner/pi-coding-agent": "latest"
 	},
 	"optionalDependencies": {
 		"@anthropic-ai/sdk": "^0.39.0"

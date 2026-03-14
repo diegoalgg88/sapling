@@ -8,7 +8,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { AnthropicClient } from "./client/index.ts";
+import { AnthropicClient, OpenAiClient } from "./client/index.ts";
 import { loadGuardConfig } from "./config.ts";
 import { ConfigError } from "./errors.ts";
 import { EventEmitter } from "./hooks/events.ts";
@@ -37,6 +37,14 @@ explore relevant code, make changes, verify results. When done, say what you acc
 // ─── Internal Factories ───────────────────────────────────────────────────────
 
 function createClient(config: SaplingConfig): LlmClient {
+	if (config.backend === "openai") {
+		return new OpenAiClient({
+			model: config.model,
+			baseURL: config.apiBaseUrl,
+			apiKey: config.apiKey,
+		});
+	}
+
 	return new AnthropicClient({
 		model: config.model,
 		baseURL: config.apiBaseUrl,

@@ -23,7 +23,7 @@ export interface AuthStore {
 	providers: Record<string, ProviderCredentials>;
 }
 
-const SUPPORTED_PROVIDERS = ["anthropic", "minimax", "nvidia", "qwen"] as const;
+const SUPPORTED_PROVIDERS = ["anthropic", "minimax", "nvidia", "qwen", "gemini"] as const;
 type Provider = (typeof SUPPORTED_PROVIDERS)[number];
 
 function isProvider(value: string): value is Provider {
@@ -75,7 +75,7 @@ export function registerAuthCommand(program: Command): void {
 	// auth set <provider>
 	auth
 		.command("set <provider>")
-		.description("Store API key for a provider (anthropic, minimax, nvidia, qwen)")
+		.description("Store API key for a provider (anthropic, minimax, nvidia, qwen, gemini)")
 		.option("--key <apiKey>", "API key to store")
 		.option("--base-url <url>", "Base URL override (required for minimax)")
 		.option("--json", "Output as JSON")
@@ -142,6 +142,9 @@ export function registerAuthCommand(program: Command): void {
 						break;
 					case "minimax":
 						envKey = process.env.MINIMAX_API_KEY;
+						break;
+					case "gemini":
+						envKey = process.env.GEMINI_API_KEY;
 						break;
 				}
 

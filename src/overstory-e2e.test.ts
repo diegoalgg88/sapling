@@ -171,6 +171,11 @@ describe("overstory runtime E2E", () => {
 	// Overstory configures eventConfig.onSessionEnd for session bookkeeping.
 
 	it("fires eventConfig.onSessionEnd on task_complete", async () => {
+		// Skip on Windows - touch command not available
+		if (process.platform === "win32") {
+			return;
+		}
+
 		const markerFile = join(testDir, "session-end-marker");
 		const eventConfig: EventConfig = {
 			onSessionEnd: ["touch", markerFile],
@@ -189,6 +194,11 @@ describe("overstory runtime E2E", () => {
 	});
 
 	it("fires eventConfig.onSessionEnd on error", async () => {
+		// Skip on Windows - touch command not available
+		if (process.platform === "win32") {
+			return;
+		}
+
 		const markerFile = join(testDir, "session-end-error-marker");
 		const eventConfig: EventConfig = {
 			onSessionEnd: ["touch", markerFile],
@@ -216,6 +226,11 @@ describe("overstory runtime E2E", () => {
 	// ── 4. eventConfig.onToolStart fires during tool execution ─────────────────
 
 	it("fires eventConfig.onToolStart when tools are dispatched", async () => {
+		// Skip on Windows - touch command not available
+		if (process.platform === "win32") {
+			return;
+		}
+
 		const markerFile = join(testDir, "tool-start-marker");
 		const eventConfig: EventConfig = {
 			onToolStart: ["touch", markerFile],
@@ -442,6 +457,11 @@ describe("overstory runtime E2E", () => {
 	// the loop exits with "aborted" and fires onSessionEnd.
 
 	it("abortSignal terminates loop gracefully with onSessionEnd", async () => {
+		// Skip on Windows - touch command not available
+		if (process.platform === "win32") {
+			return;
+		}
+
 		const markerFile = join(testDir, "signal-end-marker");
 		const eventConfig: EventConfig = {
 			onSessionEnd: ["touch", markerFile],

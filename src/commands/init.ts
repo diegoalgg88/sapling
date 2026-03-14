@@ -37,9 +37,9 @@ export async function runInit(cwd: string, jsonMode: boolean): Promise<void> {
 		[
 			`# Sapling project configuration`,
 			`project: "${projectName}"`,
-			`model: MiniMax-M2.5`,
+			`model: coder-model`,
+			`backend: openai`,
 			`max_turns: 200`,
-			`context_pipeline: v1`,
 			``,
 		].join("\n"),
 	);
@@ -58,13 +58,15 @@ export async function runInit(cwd: string, jsonMode: boolean): Promise<void> {
 
 	// Append .gitattributes entry to project root
 	const gitattrsPath = join(cwd, ".gitattributes");
+	const entry = GITATTRIBUTES_ENTRY.trim();
 	if (existsSync(gitattrsPath)) {
 		const existing = readFileSync(gitattrsPath, "utf8");
 		if (!existing.includes(".sapling/session.jsonl")) {
-			writeFileSync(gitattrsPath, `${existing}\n${GITATTRIBUTES_ENTRY}`);
+			const separator = existing.endsWith("\n") ? "" : "\n";
+			writeFileSync(gitattrsPath, `${existing}${separator}${entry}\n`);
 		}
 	} else {
-		writeFileSync(gitattrsPath, GITATTRIBUTES_ENTRY);
+		writeFileSync(gitattrsPath, `${entry}\n`);
 	}
 
 	if (jsonMode) {

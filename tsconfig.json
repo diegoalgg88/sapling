@@ -10,9 +10,11 @@
 		"noEmit": true,
 		"isolatedModules": true,
 		"skipLibCheck": true,
+		"types": ["bun", "node"],
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@mariozechner/pi-coding-agent": ["./pi-extension/pi-agent.d.ts"]
 		}
 	},
-	"include": ["src/**/*.ts"]
+	"include": ["src/**/*", "scripts/**/*", "pi-extension/**/*"]
 }
