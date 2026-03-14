@@ -58,6 +58,6 @@
 		"@mariozechner/pi-coding-agent": "latest"
 	},
 	"optionalDependencies": {
-		"@anthropic-ai/sdk": "^0.39.0"
+		"@anthropic-ai/sdk": "^0.78.0"
 	}
 }
