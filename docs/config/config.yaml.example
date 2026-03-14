@@ -1,0 +1,96 @@
+# Sapling Configuration Example
+# See: docs/config/README-CONFIG.md for setup guide
+# See: docs/config/PROVIDERS-GUIDE.md for provider details
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+# Default model to use when --model is not specified
+# Aliases: sonnet, opus, haiku (resolved via ANTHROPIC_DEFAULT_*_MODEL env vars)
+# Full names: claude-sonnet-4-5, gemini-2.0-flash, qwen/qwen3-coder-480b, etc.
+
+model: coder-model
+
+# =============================================================================
+# BACKEND CONFIGURATION
+# =============================================================================
+# Backend to use for LLM inference
+# - sdk: Use provider-native SDK (required for MiniMax, recommended for NVIDIA)
+# - openai: Use OpenAI-compatible API (works with all providers)
+
+backend: openai
+
+# =============================================================================
+# TURN LIMITS
+# =============================================================================
+# Maximum number of agent turns per run
+# Default: 200, Range: 1-500
+
+max_turns: 200
+
+# =============================================================================
+# CONTEXT WINDOW
+# =============================================================================
+# Context window size in tokens
+# Default: 200000, Minimum: 1000
+
+context_window: 200000
+
+# =============================================================================
+# API BASE URL (Optional)
+# =============================================================================
+# Override default base URL for gateway providers
+# Defaults are auto-configured per provider:
+# - MiniMax: https://api.minimax.io/anthropic
+# - NVIDIA: https://integrate.api.nvidia.com/v1
+# - Qwen: https://dashscope.aliyuncs.com/compatible-mode/v1
+# - Gemini: https://generativelanguage.googleapis.com/v1beta/openai
+
+# api_base_url: https://custom-api.example.com
+
+# =============================================================================
+# API KEY (Optional)
+# =============================================================================
+# Override API key (not recommended - use auth command or env vars instead)
+# Priority: CLI flags > env vars > OAuth files > ~/.sapling/auth.json
+
+# api_key: sk-xxx
+
+# =============================================================================
+# PROVIDER-SPECIFIC EXAMPLES
+# =============================================================================
+
+# Example 1: Anthropic (Native)
+# model: claude-sonnet-4-5
+# backend: sdk
+
+# Example 2: MiniMax (Gateway - requires base-url via auth command)
+# model: MiniMax-M2.5
+# backend: sdk
+
+# Example 3: NVIDIA (Gateway)
+# model: qwen/qwen3-coder-480b-a35b-instruct
+# backend: sdk
+
+# Example 4: Qwen (OAuth Automatic)
+# model: coder-model
+# backend: openai
+
+# Example 5: Gemini (OAuth Automatic)
+# model: gemini-2.0-flash
+# backend: openai
+
+# =============================================================================
+# USAGE EXAMPLES
+# =============================================================================
+#
+# Run with default config:
+#   sapling run "Fix this bug"
+#
+# Override model via CLI:
+#   sapling run "Add tests" --model claude-opus-4-6
+#
+# Override backend via CLI:
+#   sapling run "Refactor" --model qwen/qwen3-coder-480b --backend sdk
+#
+# =============================================================================
