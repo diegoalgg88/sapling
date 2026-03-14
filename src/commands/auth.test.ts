@@ -8,7 +8,7 @@ import { readAuthStore } from "./auth.ts";
 const AUTH_DIR = join(homedir(), ".sapling");
 const AUTH_FILE = join(AUTH_DIR, "auth.json");
 
-const CLI = new URL("../index.ts", import.meta.url).pathname;
+const CLI = join(import.meta.dir, "..", "index.ts");
 
 async function runCli(
 	args: string[],
@@ -113,6 +113,34 @@ describe("auth set", () => {
 		expect(data.success).toBe(true);
 		expect(data.provider).toBe("anthropic");
 	}, 15000);
+
+	test("stores nvidia key", async () => {
+		const { exitCode } = await runCli([
+			"auth",
+			"set",
+			"nvidia",
+			"--key",
+			"nvapi-test123",
+		]);
+		expect(exitCode).toBe(0);
+
+		const store = await readAuthStore();
+		expect(store.providers.nvidia?.apiKey).toBe("nvapi-test123");
+	}, 15000);
+
+	test("stores qwen key", async () => {
+		const { exitCode } = await runCli([
+			"auth",
+			"set",
+			"qwen",
+			"--key",
+			"sk-qwen-test456",
+		]);
+		expect(exitCode).toBe(0);
+
+		const store = await readAuthStore();
+		expect(store.providers.qwen?.apiKey).toBe("sk-qwen-test456");
+	}, 15000);
 });
 
 describe("auth status", () => {
@@ -136,6 +164,8 @@ describe("auth status", () => {
 		const names = providers.map((p) => p.provider);
 		expect(names).toContain("anthropic");
 		expect(names).toContain("minimax");
+		expect(names).toContain("nvidia");
+		expect(names).toContain("qwen");
 	}, 15000);
 
 	test("shows configured key masked from file", async () => {
@@ -165,6 +195,26 @@ describe("auth status", () => {
 		const data = JSON.parse(stdout) as { providers: Array<{ provider: string; source: string }> };
 		const ant = data.providers.find((p) => p.provider === "anthropic");
 		expect(ant?.source).toBe("env");
+	}, 15000);
+
+	test("shows nvidia key from env var", async () => {
+		const { stdout } = await runCli(["auth", "status", "--json"], {
+			NVIDIA_API_KEY: "nvapi-fromenv",
+		});
+		const data = JSON.parse(stdout) as { providers: Array<{ provider: string; source: string; maskedKey?: string }> };
+		const nvidia = data.providers.find((p) => p.provider === "nvidia");
+		expect(nvidia?.source).toBe("env");
+		expect(nvidia?.maskedKey).toContain("nvap");
+	}, 15000);
+
+	test("shows qwen key from env var (Z_AI_API_KEY)", async () => {
+		const { stdout } = await runCli(["auth", "status", "--json"], {
+			Z_AI_API_KEY: "sk-qwen-fromenv",
+		});
+		const data = JSON.parse(stdout) as { providers: Array<{ provider: string; source: string; maskedKey?: string }> };
+		const qwen = data.providers.find((p) => p.provider === "qwen");
+		expect(qwen?.source).toBe("env");
+		expect(qwen?.maskedKey).toContain("sk-q");
 	}, 15000);
 });
 
@@ -201,6 +251,24 @@ describe("auth clear", () => {
 		const { exitCode, stderr } = await runCli(["auth", "clear", "openai"]);
 		expect(exitCode).toBe(1);
 		expect(stderr).toContain("Unknown provider");
+	}, 15000);
+
+	test("clears nvidia provider", async () => {
+		await runCli(["auth", "set", "nvidia", "--key", "nvapi-test"]);
+		const { exitCode } = await runCli(["auth", "clear", "nvidia"]);
+		expect(exitCode).toBe(0);
+
+		const store = await readAuthStore();
+		expect(store.providers.nvidia).toBeUndefined();
+	}, 15000);
+
+	test("clears qwen provider", async () => {
+		await runCli(["auth", "set", "qwen", "--key", "sk-qwen-test"]);
+		const { exitCode } = await runCli(["auth", "clear", "qwen"]);
+		expect(exitCode).toBe(0);
+
+		const store = await readAuthStore();
+		expect(store.providers.qwen).toBeUndefined();
 	}, 15000);
 });
 

@@ -23,7 +23,7 @@ export interface AuthStore {
 	providers: Record<string, ProviderCredentials>;
 }
 
-const SUPPORTED_PROVIDERS = ["anthropic", "minimax"] as const;
+const SUPPORTED_PROVIDERS = ["anthropic", "minimax", "nvidia", "qwen"] as const;
 type Provider = (typeof SUPPORTED_PROVIDERS)[number];
 
 function isProvider(value: string): value is Provider {
@@ -75,7 +75,7 @@ export function registerAuthCommand(program: Command): void {
 	// auth set <provider>
 	auth
 		.command("set <provider>")
-		.description("Store API key for a provider (anthropic, minimax)")
+		.description("Store API key for a provider (anthropic, minimax, nvidia, qwen)")
 		.option("--key <apiKey>", "API key to store")
 		.option("--base-url <url>", "Base URL override (required for minimax)")
 		.option("--json", "Output as JSON")
@@ -128,7 +128,22 @@ export function registerAuthCommand(program: Command): void {
 			const store = await readAuthStore();
 
 			const statuses = SUPPORTED_PROVIDERS.map((provider) => {
-				const envKey = provider === "anthropic" ? process.env.ANTHROPIC_API_KEY : undefined;
+				// Check environment variables for each provider
+				let envKey: string | undefined;
+				switch (provider) {
+					case "anthropic":
+						envKey = process.env.ANTHROPIC_API_KEY;
+						break;
+					case "nvidia":
+						envKey = process.env.NVIDIA_API_KEY;
+						break;
+					case "qwen":
+						envKey = process.env.Z_AI_API_KEY ?? process.env.QWEN_API_KEY;
+						break;
+					case "minimax":
+						envKey = process.env.MINIMAX_API_KEY;
+						break;
+				}
 
 				const fileEntry = store.providers[provider];
 				let source: "env" | "file" | "none" = "none";
