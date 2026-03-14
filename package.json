@@ -54,7 +54,7 @@
 		"@types/bun": "latest",
 		"typescript": "^5.9.0",
 		"bun-types": "latest",
-		"@types/node": "^20.11.24",
+		"@types/node": "^25.5.0",
 		"@mariozechner/pi-coding-agent": "latest"
 	},
 	"optionalDependencies": {
