@@ -466,7 +466,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("sapling", {
 		description: "Sapling headless coding agent",
 		getArgumentCompletions: (prefix: string) => {
-			const subcommands = ["run", "status", "init", "doctor", "config"];
+			const subcommands = ["run", "init", "doctor", "config", "auth", "upgrade"];
 			const filtered = subcommands.filter((s: string) => s.startsWith(prefix));
 			return filtered.length > 0 ? filtered.map((s) => ({ value: s, label: s })) : null;
 		},
@@ -479,24 +479,40 @@ export default function (pi: ExtensionAPI) {
 
 				switch (subcommand) {
 					case "run":
-						ctx.ui?.notify?.("Usage: /sapling run <prompt> [--model <name>]", "info");
+						ctx.ui?.notify?.("Usage: /sapling run <prompt> [--model <name>] [--backend openai|sdk]", "info");
 						return;
-					case "status":
-						output = await runSpCommand("sp --version", ctx);
-						break;
 					case "init":
 						output = await runSpCommand("sp init", ctx);
 						break;
 					case "doctor":
 						output = await runSpCommand("sp doctor", ctx);
 						break;
+					case "config":
+						const configArgs = parts.slice(1).join(" ");
+						if (configArgs) {
+							output = await runSpCommand(`sp config ${configArgs}`, ctx);
+						} else {
+							output = await runSpCommand("sp config", ctx);
+						}
+						break;
+					case "auth":
+						const authArgs = parts.slice(1).join(" ");
+						if (authArgs) {
+							output = await runSpCommand(`sp auth ${authArgs}`, ctx);
+						} else {
+							output = await runSpCommand("sp auth status", ctx);
+						}
+						break;
+					case "upgrade":
+						output = await runSpCommand("sp upgrade", ctx);
+						break;
 					case "":
-						// Show status by default
+						// Show version by default
 						output = await runSpCommand("sp --version", ctx);
 						break;
 					default:
 						ctx.ui?.notify?.(`Unknown subcommand: ${subcommand}`, "warning");
-						ctx.ui?.notify?.("Available: run, status, init, doctor", "info");
+						ctx.ui?.notify?.("Available: run, init, doctor, config, auth, upgrade", "info");
 						return;
 				}
 
