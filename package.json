@@ -52,7 +52,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.4.5",
 		"@types/bun": "latest",
-		"typescript": "^5.9.0",
+		"typescript": "^6.0.2",
 		"bun-types": "latest",
 		"@types/node": "^20.11.24",
 		"@mariozechner/pi-coding-agent": "latest"
